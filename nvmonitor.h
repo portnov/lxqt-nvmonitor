@@ -43,7 +43,7 @@ class PluginSettings;
 class NvmlGpuData
 {
 public:
-    NvmlGpuData() : valid(false), gpuUtil(-1), memUtil(-1), temp(-1), memTotal(0), memUsed(0) {}
+    NvmlGpuData() : valid(false), gpuUtil(-1), memUtil(-1), temp(-1), memTotal(0), memUsed(0), powerUsage(0), powerMax(0) {}
 
     bool valid;
     QString name;
@@ -52,6 +52,8 @@ public:
     float temp;        // temperature, °C
     qint64 memTotal;   // total VRAM, bytes
     qint64 memUsed;    // used VRAM, bytes
+    qint64 powerUsage; // current power draw, mW (milliwatts)
+    qint64 powerMax;   // power management limit, mW
 };
 
 class NvmlGpu
@@ -110,6 +112,9 @@ private:
     nvmlReturn_t (*m_nvmlDeviceGetUtilizationRates)(nvmlDevice_t, nvmlUtilization_t*);
     nvmlReturn_t (*m_nvmlDeviceGetTemperature)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int*);
     nvmlReturn_t (*m_nvmlDeviceGetMemoryInfo)(nvmlDevice_t, nvmlMemory_t*);
+    nvmlReturn_t (*m_nvmlDeviceGetPowerUsage)(nvmlDevice_t, unsigned long long*);
+    nvmlReturn_t (*m_nvmlDeviceGetPowerManagementLimit)(nvmlDevice_t, unsigned int*);
+    nvmlReturn_t (*m_nvmlDeviceGetEnforcedPowerLimit)(nvmlDevice_t, unsigned int*);
 
     // NVML constants
     static const unsigned int NVML_TEMPERATURE_GPU = 0;
@@ -135,7 +140,8 @@ public:
         GpuUtilization,    // GPU utilization (%) — compute unit bandwidth
         MemUtilization,    // VRAM load (%) — memory bandwidth utilization
         VramUsage,         // VRAM usage (%) — used/total capacity
-        Temperature        // Temperature (°C)
+        Temperature,       // Temperature (°C)
+        PowerUsage         // Power draw (%) — current / max power limit
     };
     Q_ENUM(GpuMetric)
 

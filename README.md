@@ -7,6 +7,7 @@ An LXQt panel plugin that displays NVIDIA GPU metrics as a scrolling graph:
 - **VRAM Load** — memory bandwidth utilization percentage
 - **VRAM Usage Percent** — VRAM capacity used (used/total)
 - **GPU Temperature** — current GPU temperature
+- **Power Usage** — power draw as percentage of max power limit (current/max)
 
 Data is sourced from the NVML library (`libnvidia-ml.so`), similar to [btop](https://github.com/aristocratos/btop).
 
@@ -66,6 +67,7 @@ After adding the plugin to the panel, right-click on it and select "Configure". 
 - **VRAM Load** — shows VRAM bandwidth utilization percentage
 - **VRAM Usage Percent** — shows VRAM capacity used (used/total)
 - **Temperature** — shows GPU temperature in degrees Celsius
+- **Power Usage** — shows power draw as percentage of max power limit
 
 ### Display
 - **Update interval** — data refresh interval (seconds)

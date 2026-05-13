@@ -50,6 +50,9 @@ NvmlGpu::NvmlGpu()
     , m_nvmlDeviceGetUtilizationRates(nullptr)
     , m_nvmlDeviceGetTemperature(nullptr)
     , m_nvmlDeviceGetMemoryInfo(nullptr)
+    , m_nvmlDeviceGetPowerUsage(nullptr)
+    , m_nvmlDeviceGetPowerManagementLimit(nullptr)
+    , m_nvmlDeviceGetEnforcedPowerLimit(nullptr)
     , m_initialized(false)
 {
 }
@@ -87,6 +90,11 @@ bool NvmlGpu::loadSymbols()
     if (!(m_nvmlDeviceGetUtilizationRates = (decltype(m_nvmlDeviceGetUtilizationRates))m_lib.resolve("nvmlDeviceGetUtilizationRates"))) return false;
     if (!(m_nvmlDeviceGetTemperature = (decltype(m_nvmlDeviceGetTemperature))m_lib.resolve("nvmlDeviceGetTemperature"))) return false;
     if (!(m_nvmlDeviceGetMemoryInfo = (decltype(m_nvmlDeviceGetMemoryInfo))m_lib.resolve("nvmlDeviceGetMemoryInfo"))) return false;
+
+    // Power functions are optional — some GPUs/drivers may not support them
+    m_nvmlDeviceGetPowerUsage = (decltype(m_nvmlDeviceGetPowerUsage))m_lib.resolve("nvmlDeviceGetPowerUsage");
+    m_nvmlDeviceGetPowerManagementLimit = (decltype(m_nvmlDeviceGetPowerManagementLimit))m_lib.resolve("nvmlDeviceGetPowerManagementLimit");
+    m_nvmlDeviceGetEnforcedPowerLimit = (decltype(m_nvmlDeviceGetEnforcedPowerLimit))m_lib.resolve("nvmlDeviceGetEnforcedPowerLimit");
 
     return true;
 }
@@ -218,6 +226,37 @@ NvmlGpuData NvmlGpu::getDeviceData(int index) const
         data.memUsed = static_cast<qint64>(mem.used);
     }
 
+    // Get power usage (current draw in microwatts)
+    if (m_nvmlDeviceGetPowerUsage) {
+        unsigned long long power = 0;
+        result = m_nvmlDeviceGetPowerUsage(device, &power);
+        if (result == 0) {
+            data.powerUsage = static_cast<qint64>(power);
+        }
+    }
+
+    // Get power management limit (max power in microwatts)
+    // GetPowerManagementLimit is not supported on laptop GPUs, fall back to GetEnforcedPowerLimit
+    if (m_nvmlDeviceGetPowerManagementLimit) {
+        unsigned int maxPower = 0;
+        result = m_nvmlDeviceGetPowerManagementLimit(device, &maxPower);
+        if (result == 0) {
+            data.powerMax = static_cast<qint64>(maxPower);
+        } else if (m_nvmlDeviceGetEnforcedPowerLimit) {
+            // Fallback: enforced power limit (works on laptop GPUs)
+            result = m_nvmlDeviceGetEnforcedPowerLimit(device, &maxPower);
+            if (result == 0) {
+                data.powerMax = static_cast<qint64>(maxPower);
+            }
+        }
+    } else if (m_nvmlDeviceGetEnforcedPowerLimit) {
+        unsigned int maxPower = 0;
+        result = m_nvmlDeviceGetEnforcedPowerLimit(device, &maxPower);
+        if (result == 0) {
+            data.powerMax = static_cast<qint64>(maxPower);
+        }
+    }
+
     return data;
 }
 
@@ -299,6 +338,8 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
         mMetric = NvMonitorContent::VramUsage;
     } else if (metricStr == QLatin1String("temperature")) {
         mMetric = NvMonitorContent::Temperature;
+    } else if (metricStr == QLatin1String("powerUsage")) {
+        mMetric = NvMonitorContent::PowerUsage;
     } else {
         mMetric = NvMonitorContent::GpuUtilization;
     }
@@ -405,6 +446,21 @@ void NvMonitorContent::updateGraph()
             value = mGpuData.temp;
             tooltip = tr("Temp: %1°C").arg(static_cast<int>(value));
             break;
+        case NvMonitorContent::PowerUsage: {
+            // Power usage percentage: current / max * 100
+            // NVML returns power in milliwatts (mW), despite docs saying microwatts
+            if (mGpuData.powerMax > 0) {
+                value = static_cast<float>(mGpuData.powerUsage) * 100.0f / static_cast<float>(mGpuData.powerMax);
+            }
+            // Format power: Watts with one decimal place (mW → W: divide by 1000)
+            double usedW = static_cast<double>(mGpuData.powerUsage) / 1000.0;
+            double maxW = static_cast<double>(mGpuData.powerMax) / 1000.0;
+            tooltip = tr("Power: %1% (%2 / %3 W)")
+                        .arg(static_cast<int>(value))
+                        .arg(usedW, 0, 'f', 1)
+                        .arg(maxW, 0, 'f', 1);
+            break;
+        }
     }
 
     mCurrentValue = value;
@@ -551,6 +607,9 @@ void NvMonitorContent::drawValue(QPainter &p)
             break;
         case NvMonitorContent::Temperature:
             text = QString("%1°C").arg(static_cast<int>(mCurrentValue));
+            break;
+        case NvMonitorContent::PowerUsage:
+            text = QString("%1%").arg(static_cast<int>(mCurrentValue));
             break;
     }
 
