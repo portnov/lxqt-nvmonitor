@@ -132,9 +132,10 @@ class NvMonitorContent : public QWidget
 
 public:
     enum GpuMetric {
-        GpuUtilization,  // Загрузка GPU (%)
-        MemUtilization,  // Загрузка VRAM (%)
-        Temperature      // Температура (°C)
+        GpuUtilization,    // Загрузка GPU (%) — bandwidth utilization
+        MemUtilization,    // Нагрузка VRAM (%) — memory bandwidth utilization
+        VramUsage,         // Использование VRAM (%) — used/total capacity
+        Temperature        // Температура (°C)
     };
     Q_ENUM(GpuMetric)
 

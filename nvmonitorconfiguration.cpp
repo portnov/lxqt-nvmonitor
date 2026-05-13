@@ -119,7 +119,8 @@ void NvMonitorConfiguration::loadSettings()
     // Заполняем список метрик
     ui->metricCOB->clear();
     ui->metricCOB->addItem(tr("GPU Utilization"), QStringLiteral("gpuUtilization"));
-    ui->metricCOB->addItem(tr("VRAM Utilization"), QStringLiteral("memUtilization"));
+    ui->metricCOB->addItem(tr("VRAM Load"), QStringLiteral("memUtilization"));
+    ui->metricCOB->addItem(tr("VRAM Usage Percent"), QStringLiteral("vramUsage"));
     ui->metricCOB->addItem(tr("Temperature"), QStringLiteral("temperature"));
 
     QString metric = settings().value(QStringLiteral("data/metric"), QStringLiteral("gpuUtilization")).toString();

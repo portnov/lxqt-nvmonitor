@@ -300,6 +300,8 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     QString metricStr = settings->value(QStringLiteral("data/metric"), QStringLiteral("gpuUtilization")).toString();
     if (metricStr == QLatin1String("memUtilization")) {
         mMetric = NvMonitorContent::MemUtilization;
+    } else if (metricStr == QLatin1String("vramUsage")) {
+        mMetric = NvMonitorContent::VramUsage;
     } else if (metricStr == QLatin1String("temperature")) {
         mMetric = NvMonitorContent::Temperature;
     } else {
@@ -389,8 +391,22 @@ void NvMonitorContent::updateGraph()
             break;
         case NvMonitorContent::MemUtilization:
             value = mGpuData.memUtil;
-            tooltip = tr("VRAM: %1%").arg(static_cast<int>(value));
+            tooltip = tr("VRAM load: %1%").arg(static_cast<int>(value));
             break;
+        case NvMonitorContent::VramUsage: {
+            // Процент использованной VRAM (capacity): used / total * 100
+            if (mGpuData.memTotal > 0) {
+                value = static_cast<float>(mGpuData.memUsed) * 100.0f / static_cast<float>(mGpuData.memTotal);
+            }
+            // Форматируем объём: ГБ с одной цифрой после запятой
+            double usedGB = static_cast<double>(mGpuData.memUsed) / (1024.0 * 1024.0 * 1024.0);
+            double totalGB = static_cast<double>(mGpuData.memTotal) / (1024.0 * 1024.0 * 1024.0);
+            tooltip = tr("VRAM: %1% (%2 / %3 GB)")
+                        .arg(static_cast<int>(value))
+                        .arg(usedGB, 0, 'f', 1)
+                        .arg(totalGB, 0, 'f', 1);
+            break;
+        }
         case NvMonitorContent::Temperature:
             value = mGpuData.temp;
             tooltip = tr("Temp: %1°C").arg(static_cast<int>(value));
@@ -544,6 +560,9 @@ void NvMonitorContent::drawValue(QPainter &p)
             text = QString("%1%").arg(static_cast<int>(mCurrentValue));
             break;
         case NvMonitorContent::MemUtilization:
+            text = QString("%1%").arg(static_cast<int>(mCurrentValue));
+            break;
+        case NvMonitorContent::VramUsage:
             text = QString("%1%").arg(static_cast<int>(mCurrentValue));
             break;
         case NvMonitorContent::Temperature:
