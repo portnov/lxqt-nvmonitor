@@ -54,3 +54,9 @@ configure_file(resources/nvmonitor.desktop.in nvmonitor.desktop @ONLY)
 # Установка
 install(TARGETS nvmonitor DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/lxqt-panel/")
 install(FILES "${CMAKE_BINARY_DIR}/nvmonitor.desktop" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/lxqt/lxqt-panel/")
+
+# Тесты (опционально, требуются Qt6Test)
+option(BUILD_TESTS "Build tests for the plugin" ON)
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
