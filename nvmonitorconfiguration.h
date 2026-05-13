@@ -50,6 +50,10 @@ private:
     QColor mGridColor;
     QColor mTitleColor;
 
+private:
+    // Устанавливает цвет кнопки-превью через stylesheet (setPalette игнорируется в Qt6)
+    void setColorButton(QPushButton *button, const QColor &color);
+
 private slots:
     void loadSettings() override;
     void metricChanged(int index);

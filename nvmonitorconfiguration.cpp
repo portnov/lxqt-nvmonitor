@@ -38,6 +38,7 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
     setObjectName(QStringLiteral("NvMonitorConfigurationWindow"));
     ui->setupUi(this);
 
+    // Кнопки диалога: Close/Reset подключены через .ui (accepted→accept, rejected→reject)
     connect(ui->buttons, &QDialogButtonBox::clicked, this, &NvMonitorConfiguration::dialogButtonsAction);
 
     loadSettings();
@@ -55,8 +56,7 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
         QColor color = QColorDialog::getColor(mGraphColor, this, tr("Select graph color"));
         if (color.isValid()) {
             mGraphColor = color;
-            ui->graphColorPB->setPalette(QPalette(color));
-            ui->graphColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+            setColorButton(ui->graphColorPB, color);
             if (!mLockSettingChanges) {
                 this->settings().setValue(QStringLiteral("graph/color"), color.name());
             }
@@ -66,8 +66,7 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
         QColor color = QColorDialog::getColor(mGridColor, this, tr("Select grid color"));
         if (color.isValid()) {
             mGridColor = color;
-            ui->gridColorPB->setPalette(QPalette(color));
-            ui->gridColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+            setColorButton(ui->gridColorPB, color);
             if (!mLockSettingChanges) {
                 this->settings().setValue(QStringLiteral("grid/color"), color.name());
             }
@@ -77,8 +76,7 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
         QColor color = QColorDialog::getColor(mTitleColor, this, tr("Select title color"));
         if (color.isValid()) {
             mTitleColor = color;
-            ui->titleColorPB->setPalette(QPalette(color));
-            ui->titleColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+            setColorButton(ui->titleColorPB, color);
             if (!mLockSettingChanges) {
                 this->settings().setValue(QStringLiteral("title/color"), color.name());
             }
@@ -97,6 +95,21 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
 NvMonitorConfiguration::~NvMonitorConfiguration()
 {
     delete ui;
+}
+
+void NvMonitorConfiguration::setColorButton(QPushButton *button, const QColor &color)
+{
+    // Qt6-стили (Breeze, Fusion) игнорируют setPalette для фона кнопок.
+    // Используем stylesheet с background-color — это надёжный способ.
+    button->setStyleSheet(
+        QString("QPushButton { "
+                "background-color: %1; "
+                "border: 1px solid #888888; "
+                "border-radius: 2px; "
+                "min-width: 24px; "
+                "min-height: 24px; "
+                "}")
+        .arg(color.name(QColor::HexRgb)));
 }
 
 void NvMonitorConfiguration::loadSettings()
@@ -119,18 +132,15 @@ void NvMonitorConfiguration::loadSettings()
 
     QString graphColorName = settings().value(QStringLiteral("graph/color"), QStringLiteral("#ff0000")).toString();
     mGraphColor = QColor(graphColorName);
-    ui->graphColorPB->setPalette(QPalette(mGraphColor));
-    ui->graphColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+    setColorButton(ui->graphColorPB, mGraphColor);
 
     QString gridColorName = settings().value(QStringLiteral("grid/color"), QStringLiteral("#c0c0c0")).toString();
     mGridColor = QColor(gridColorName);
-    ui->gridColorPB->setPalette(QPalette(mGridColor));
-    ui->gridColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+    setColorButton(ui->gridColorPB, mGridColor);
 
     QString titleColorName = settings().value(QStringLiteral("title/color"), QStringLiteral("#ffffff")).toString();
     mTitleColor = QColor(titleColorName);
-    ui->titleColorPB->setPalette(QPalette(mTitleColor));
-    ui->titleColorPB->setStyleSheet("QPushButton { border: 1px solid palette(midlight); }");
+    setColorButton(ui->titleColorPB, mTitleColor);
 
     ui->titleLE->setText(settings().value(QStringLiteral("title/label"), QString()).toString());
     ui->gridLinesSB->setValue(settings().value(QStringLiteral("grid/lines"), 1).toInt());
