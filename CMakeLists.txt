@@ -46,7 +46,6 @@ target_link_libraries(nvmonitor
 
 set_target_properties(nvmonitor PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-    PREFIX ""  # без префикса lib
 )
 
 # Генерируем .desktop файл из .desktop.in
