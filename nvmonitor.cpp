@@ -28,6 +28,7 @@
 #include "pluginsettings.h"
 
 #include <QPainter>
+#include <QPalette>
 #include <QResizeEvent>
 #include <QTimer>
 #include <QCoreApplication>
@@ -51,14 +52,14 @@ NvmlGpu::NvmlGpu()
     , m_nvmlDeviceGetUtilizationRates(nullptr)
     , m_nvmlDeviceGetTemperature(nullptr)
     , m_nvmlDeviceGetMemoryInfo(nullptr)
+    , m_initialized(false)
 {
 }
 
 NvmlGpu::~NvmlGpu()
 {
-    if (m_nvmlShutdown) {
-        m_nvmlShutdown();
-    }
+    // m_nvmlShutdown обнуляется в shutdown() и при ошибках init()
+    // unloadLibrary() безопасен при m_dlHandle == nullptr
     unloadLibrary();
 }
 
@@ -99,17 +100,27 @@ bool NvmlGpu::loadSymbols()
 
 bool NvmlGpu::init()
 {
+    if (m_initialized) {
+        return m_deviceCount > 0;  // Уже инициализирована
+    }
+
     if (!loadLibrary()) {
         return false;
     }
 
     if (!loadSymbols()) {
         unloadLibrary();
+        m_nvmlShutdown = nullptr;  // Предотвращаем вызов в деструкторе
         return false;
     }
 
     nvmlReturn_t result = m_nvmlInit();
     if (result != 0) {
+        // nvmlInit не удался — вызываем shutdown для корректного cleanup
+        if (m_nvmlShutdown) {
+            m_nvmlShutdown();
+            m_nvmlShutdown = nullptr;
+        }
         unloadLibrary();
         return false;
     }
@@ -117,23 +128,32 @@ bool NvmlGpu::init()
     unsigned int devCount = 0;
     result = m_nvmlDeviceGetCount(&devCount);
     if (result != 0) {
+        if (m_nvmlShutdown) {
+            m_nvmlShutdown();
+            m_nvmlShutdown = nullptr;
+        }
         devCount = 0;
         unloadLibrary();
         return false;
     }
 
     m_deviceCount = static_cast<int>(devCount);
+    m_initialized = true;
     return m_deviceCount > 0;
 }
 
 void NvmlGpu::shutdown()
 {
+    if (!m_initialized) {
+        return;
+    }
     if (m_nvmlShutdown) {
         m_nvmlShutdown();
         m_nvmlShutdown = nullptr;
     }
     unloadLibrary();
     m_deviceCount = 0;
+    m_initialized = false;
 }
 
 QString NvmlGpu::getDeviceName(int index) const
@@ -230,15 +250,17 @@ NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
     , mHistory()
     , mHistoryOffset(0)
     , mTimerId(-1)
+    , mTimerStarted(false)
     , mCurrentValue(0)
+    , mNvmlAvailable(false)
 {
     setObjectName(QStringLiteral("NvMonitor_Graph"));
     setMouseTracking(true);
 
     // Инициализируем NVML
-    mGpu.init();
+    mNvmlAvailable = mGpu.init();
 
-    if (mGpu.deviceCount() > 0) {
+    if (mNvmlAvailable && mGpu.deviceCount() > 0) {
         mGpuData = mGpu.getDeviceData(0);
     }
 }
@@ -247,12 +269,15 @@ NvMonitorContent::~NvMonitorContent()
 {
     if (mTimerId != -1) {
         killTimer(mTimerId);
+        mTimerId = -1;
     }
+    mGpu.shutdown();
 }
 
 void NvMonitorContent::updateSettings(const PluginSettings *settings)
 {
     int oldMetric = mMetric;
+    bool oldShowValue = mShowValue;
 
     mUseThemeColors = settings->value(QStringLiteral("graph/useThemeColors"), true).toBool();
     mUpdateInterval = settings->value(QStringLiteral("graph/updateInterval"), 1000).toInt();
@@ -262,10 +287,14 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     mShowValue = settings->value(QStringLiteral("graph/showValue"), false).toBool();
     mMaxHistory = settings->value(QStringLiteral("graph/maxHistory"), 100).toInt();
 
-    // Цвета
-    mGraphColor = QColor(settings->value(QStringLiteral("graph/color"), QStringLiteral("#ff0000")).toString());
-    mGridColor = QColor(settings->value(QStringLiteral("grid/color"), QStringLiteral("#c0c0c0")).toString());
-    mTitleColor = QColor(settings->value(QStringLiteral("title/color"), QStringLiteral("#ffffff")).toString());
+    // Применяем тему или пользовательские цвета
+    if (mUseThemeColors) {
+        applyThemeColors();
+    } else {
+        mGraphColor = QColor(settings->value(QStringLiteral("graph/color"), QStringLiteral("#ff0000")).toString());
+        mGridColor = QColor(settings->value(QStringLiteral("grid/color"), QStringLiteral("#c0c0c0")).toString());
+        mTitleColor = QColor(settings->value(QStringLiteral("title/color"), QStringLiteral("#ffffff")).toString());
+    }
 
     // Метрика
     QString metricStr = settings->value(QStringLiteral("data/metric"), QStringLiteral("gpuUtilization")).toString();
@@ -279,14 +308,24 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
 
     // Обновляем шрифт заголовка
     if (!mTitleLabel.isEmpty()) {
+        if (mTitleFontPixelHeight <= 0) {
+            // Шрифт ещё не инициализирован — берём системный
+            mTitleFont = QFont();
+            mTitleFont.setBold(true);
+            mTitleFont.setPixelSize(12);
+        }
         QFontMetrics fm(mTitleFont);
-        mTitleFontPixelHeight = fm.height() - 1;
+        mTitleFontPixelHeight = fm.height();
     } else {
         mTitleFontPixelHeight = 0;
     }
 
-    // Перезапускаем таймер при изменении интервала
-    if (mTimerId != -1) {
+    // Запускаем таймер, если ещё не запущен
+    if (!mTimerStarted) {
+        mTimerId = startTimer(mUpdateInterval);
+        mTimerStarted = true;
+    } else {
+        // Перезапускаем таймер при изменении интервала
         killTimer(mTimerId);
         mTimerId = startTimer(mUpdateInterval);
     }
@@ -317,10 +356,19 @@ void NvMonitorContent::reset()
     update();
 }
 
+void NvMonitorContent::applyThemeColors()
+{
+    // Используем палитру виджета для получения системных цветов
+    QPalette pal = palette();
+    mGraphColor = pal.color(QPalette::Text);        // Текст графика
+    mGridColor = pal.color(QPalette::Mid);           // Сетка
+    mTitleColor = pal.color(QPalette::WindowText);   // Заголовок
+}
+
 void NvMonitorContent::collectData()
 {
     // NVML уже инициализирована в конструкторе, просто получаем данные
-    if (mGpu.deviceCount() > 0) {
+    if (mNvmlAvailable && mGpu.deviceCount() > 0) {
         mGpuData = mGpu.getDeviceData(0);
     }
 }
@@ -372,7 +420,11 @@ void NvMonitorContent::updateGraph()
         painter.drawLine(mHistoryOffset, 100 - y, mHistoryOffset, 100);
     }
 
-    mHistoryOffset = (mHistoryOffset + 1) % mHistoryImage.width();
+    // Защита от деления на ноль: mHistoryImage.width() может быть 0
+    // если resizeEvent был вызван с нулевой шириной
+    if (mHistoryImage.width() > 0) {
+        mHistoryOffset = (mHistoryOffset + 1) % mHistoryImage.width();
+    }
 
     setToolTip(QStringLiteral("<b>%1</b><br>%2")
             .arg(mGpuData.name.isEmpty() ? tr("NVIDIA GPU") : mGpuData.name)
@@ -383,9 +435,12 @@ void NvMonitorContent::updateGraph()
 
 void NvMonitorContent::clearHistory()
 {
+    // Очищаем один столбец пикселей в mHistoryImage на позиции mHistoryOffset
+    // Используем setPixel для безопасности (не зависит от формата пикселя)
     QRgb bg = QColor(Qt::transparent).rgba();
-    for (int i = 0; i < 100; ++i)
-        reinterpret_cast<QRgb*>(mHistoryImage.scanLine(i))[mHistoryOffset] = bg;
+    for (int i = 0; i < 100 && i < mHistoryImage.height(); ++i) {
+        mHistoryImage.setPixel(mHistoryOffset, i, bg);
+    }
 }
 
 void NvMonitorContent::paintEvent(QPaintEvent *event)
@@ -522,9 +577,9 @@ bool NvMonitorContent::event(QEvent *event)
 {
     if (event->type() == QEvent::FontChange) {
         // Обновляем высоту шрифта заголовка
-        if (!mTitleLabel.isEmpty()) {
+        if (!mTitleLabel.isEmpty() && mTitleFontPixelHeight > 0) {
             QFontMetrics fm(mTitleFont);
-            mTitleFontPixelHeight = fm.height() - 1;
+            mTitleFontPixelHeight = fm.height();
         }
         update();
     }

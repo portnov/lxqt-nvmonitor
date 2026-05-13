@@ -7,6 +7,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+# Путь к установленным библиотекам lxqt (по умолчанию — системный, можно переопределить)
+set(LXQT_INSTALL_PREFIX "/home/portnov/soft/lxqt" CACHE PATH "Путь к установленным библиотекам lxqt")
+set(CMAKE_PREFIX_PATH "${LXQT_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(lxqt REQUIRED)
 find_package(KF6WindowSystem REQUIRED)
@@ -29,23 +33,10 @@ set(UIS
 # Динамическая библиотека (плагин)
 add_library(nvmonitor MODULE ${HEADERS} ${SOURCES} ${UIS})
 
-# Добавляем include-пути для заголовков lxqt-panel
-# (они не установлены в систему, доступны только в дереве исходников)
+# Заголовки lxqt-panel не устанавливаются в систему отдельно,
+# поэтому всегда используем дерево исходников.
 set(LXQT_PANEL_SRC_DIR "${CMAKE_SOURCE_DIR}/../lxqt-panel")
-
-# Проверяем, установлены ли заголовки lxqt-panel в систему
-find_path(LXQT_PANEL_INCLUDE_DIR
-    NAMES ilxqtpanelplugin.h
-    PATHS /usr/include /usr/local/include /home/portnov/soft/lxqt/include
-    NO_DEFAULT_PATH
-)
-
-if(NOT LXQT_PANEL_INCLUDE_DIR)
-    # Используем заголовки из дерева исходников lxqt-panel
-    set(LXQT_PANEL_INCLUDE_DIR "${LXQT_PANEL_SRC_DIR}/panel")
-endif()
-
-include_directories(${LXQT_PANEL_INCLUDE_DIR})
+include_directories("${LXQT_PANEL_SRC_DIR}/panel")
 
 target_link_libraries(nvmonitor
     Qt6::Widgets

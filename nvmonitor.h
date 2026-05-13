@@ -60,6 +60,10 @@ public:
     NvmlGpu();
     ~NvmlGpu();
 
+    // Удалить копию/присваивание (singleton-подобный класс)
+    NvmlGpu(const NvmlGpu &) = delete;
+    NvmlGpu &operator=(const NvmlGpu &) = delete;
+
     // Инициализация NVML, возвращает true при успехе
     bool init();
 
@@ -93,6 +97,9 @@ private:
     bool loadLibrary();
     void unloadLibrary();
     bool loadSymbols();
+
+    // Состояние инициализации
+    bool m_initialized;
 
     // NVML функции
     nvmlReturn_t (*m_nvmlInit)();
@@ -160,7 +167,7 @@ protected:
 private:
     void collectData();
     void updateGraph();
-    void updateTooltip(float value);
+    void applyThemeColors();
     void clearHistory();
     void drawGrid(QPainter &p);
     void drawGraph(QPainter &p);
@@ -196,9 +203,13 @@ private:
 
     // Таймер
     int mTimerId;
+    bool mTimerStarted;
 
     // Текущее значение для отображения
     float mCurrentValue;
+
+    // Состояние NVML
+    bool mNvmlAvailable;
 };
 
 #endif // NVMONITOR_H
