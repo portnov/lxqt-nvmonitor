@@ -512,22 +512,22 @@ void NvMonitorContent::drawGraph(QPainter &p)
     qreal graphTop = mTitleFontPixelHeight;
     qreal graphHeight = height() - graphTop;
 
-    // Масштабируем изображение истории по высоте графика
-    qreal scale = graphHeight / 100.0;
-
     p.save();
-    // Сдвигаем в начало графика и инвертируем по Y
-    p.translate(0, -graphTop);
-    p.scale(1.0, -1.0);
+    // Сдвигаем начало координат в верхнюю границу графика.
+    // mHistoryImage уже имеет правильную ориентацию:
+    //   y=0  → значение 100% (верх)
+    //   y=100 → значение 0%  (низ)
+    // drawImage автоматически растянёт источник (100px) до цели (graphHeight px).
+    p.translate(0, graphTop);
 
-    // Правая часть (начало истории)
+    // Правая часть (начало истории — самые свежие данные)
     int visibleWidth = mHistoryImage.width() - mHistoryOffset;
     if (visibleWidth > 0) {
         p.drawImage(QRect(0, 0, visibleWidth, graphHeight), mHistoryImage,
                     QRect(mHistoryOffset, 0, visibleWidth, 100));
     }
 
-    // Левая часть (конец истории)
+    // Левая часть (конец истории — обёртка по кругу)
     if (mHistoryOffset > 0) {
         p.drawImage(QRect(width() - mHistoryOffset, 0, mHistoryOffset, graphHeight), mHistoryImage,
                     QRect(0, 0, mHistoryOffset, 100));
