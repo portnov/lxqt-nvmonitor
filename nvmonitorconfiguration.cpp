@@ -38,12 +38,12 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
     setObjectName(QStringLiteral("NvMonitorConfigurationWindow"));
     ui->setupUi(this);
 
-    // Кнопки диалога: Close/Reset подключены через .ui (accepted→accept, rejected→reject)
+    // Dialog buttons: Close/Reset connected via .ui (accepted→accept, rejected→reject)
     connect(ui->buttons, &QDialogButtonBox::clicked, this, &NvMonitorConfiguration::dialogButtonsAction);
 
     loadSettings();
 
-    // Подключение сигналов
+    // Connect signals
     connect(ui->metricCOB, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &NvMonitorConfiguration::metricChanged);
     connect(ui->updateIntervalDSB, &QDoubleSpinBox::valueChanged,
@@ -99,8 +99,8 @@ NvMonitorConfiguration::~NvMonitorConfiguration()
 
 void NvMonitorConfiguration::setColorButton(QPushButton *button, const QColor &color)
 {
-    // Qt6-стили (Breeze, Fusion) игнорируют setPalette для фона кнопок.
-    // Используем stylesheet с background-color — это надёжный способ.
+    // Qt6 styles (Breeze, Fusion) ignore setPalette for button backgrounds.
+    // Using stylesheet with background-color is the reliable approach.
     button->setStyleSheet(
         QString("QPushButton { "
                 "background-color: %1; "
@@ -116,7 +116,7 @@ void NvMonitorConfiguration::loadSettings()
 {
     mLockSettingChanges = true;
 
-    // Заполняем список метрик
+    // Populate metric list
     ui->metricCOB->clear();
     ui->metricCOB->addItem(tr("GPU Utilization"), QStringLiteral("gpuUtilization"));
     ui->metricCOB->addItem(tr("VRAM Load"), QStringLiteral("memUtilization"));

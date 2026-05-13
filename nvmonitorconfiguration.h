@@ -51,7 +51,7 @@ private:
     QColor mTitleColor;
 
 private:
-    // Устанавливает цвет кнопки-превью через stylesheet (setPalette игнорируется в Qt6)
+    // Sets color preview button via stylesheet (setPalette is ignored in Qt6)
     void setColorButton(QPushButton *button, const QColor &color);
 
 private slots:

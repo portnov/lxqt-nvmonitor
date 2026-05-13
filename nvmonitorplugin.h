@@ -39,11 +39,11 @@ public:
     explicit NvMonitor(const ILXQtPanelPluginStartupInfo &startupInfo);
     ~NvMonitor() override;
 
-    // Обязательные методы
+    // Required methods
     QWidget *widget() override { return mWidget; }
     QString themeId() const override { return QStringLiteral("NvMonitor"); }
 
-    // Опциональные методы
+    // Optional methods
     Flags flags() const override { return PreferRightAlignment | HaveConfigDialog; }
     bool isSeparate() const override { return true; }
     QDialog *configureDialog() override;

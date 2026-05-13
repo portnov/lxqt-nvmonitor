@@ -13,58 +13,58 @@
 #include <dlfcn.h>
 
 /**
- * Тесты для модуля NvmlGpu - загрузки NVML библиотеки и получения данных GPU.
+ * Tests for the NvmlGpu module — NVML library loading and GPU data retrieval.
  *
- * Эти тесты проверяют:
- * 1. Динамическую загрузку libnvidia-ml.so
- * 2. Загрузку символов (dlsym)
- * 3. Инициализацию NVML (nvmlInit)
- * 4. Получение количества устройств
- * 5. Получение данных GPU (утилизация, температура, память)
+ * These tests verify:
+ * 1. Dynamic loading of libnvidia-ml.so
+ * 2. Symbol loading (dlsym)
+ * 3. NVML initialization (nvmlInit)
+ * 4. Device count retrieval
+ * 5. GPU data retrieval (utilization, temperature, memory)
  *
- * Если NVIDIA GPU с NVML не доступен, тесты помечаются как skipped.
+ * Tests are automatically skipped if NVIDIA GPU with NVML is not available.
  */
 class TestNvml : public QObject
 {
     Q_OBJECT
 
 private slots:
-    // Тест: проверка наличия библиотеки NVML
+    // Test: check NVML library availability
     void testNvmlLibraryAvailable_data();
     void testNvmlLibraryAvailable();
 
-    // Тест: загрузка символов NVML
+    // Test: NVML symbol loading
     void testNvmlSymbolsLoaded_data();
     void testNvmlSymbolsLoaded();
 
-    // Тест: инициализация NVML
+    // Test: NVML initialization
     void testNvmlInit_data();
     void testNvmlInit();
 
-    // Тест: получение количества GPU
+    // Test: GPU device count
     void testNvmlDeviceCount_data();
     void testNvmlDeviceCount();
 
-    // Тест: получение данных GPU
+    // Test: GPU data retrieval
     void testNvmlGetDeviceData_data();
     void testNvmlGetDeviceData();
 
-    // Тест: получение имени GPU
+    // Test: GPU name retrieval
     void testNvmlGetDeviceName_data();
     void testNvmlGetDeviceName();
 
-    // Тест: shutdown NVML
+    // Test: NVML shutdown
     void testNvmlShutdown_data();
     void testNvmlShutdown();
 
 private:
-    // Вспомогательная функция: проверяет наличие библиотеки
+    // Helper: check if NVML library is available
     bool isNvmlAvailable();
 
-    // Вспомогательная функция: загружает библиотеку и символы
+    // Helper: load library and symbols
     bool loadNvml(void*& dlHandle, void**& symbols);
 
-    // Структура для хранения загруженных символов
+    // Structure to hold loaded symbols
     struct NvmlSymbols {
         void* nvmlInit;
         void* nvmlShutdown;
@@ -107,7 +107,7 @@ void TestNvml::testNvmlLibraryAvailable()
               "Install NVIDIA drivers to run this test.", SkipAll);
     }
 
-    // Библиотека доступна, продолжаем тест
+    // Library is available, continue testing
     QVERIFY(true);
 }
 
@@ -130,7 +130,7 @@ void TestNvml::testNvmlSymbolsLoaded()
     }
     QVERIFY2(dlHandle != nullptr, "Failed to load NVML library");
 
-    // Проверяем загрузку ключевых символов
+    // Check that key symbols are loaded
     QVERIFY(dlsym(dlHandle, "nvmlInit") != nullptr);
     QVERIFY(dlsym(dlHandle, "nvmlShutdown") != nullptr);
     QVERIFY(dlsym(dlHandle, "nvmlDeviceGetCount") != nullptr);
@@ -166,11 +166,11 @@ void TestNvml::testNvmlInit()
     auto nvmlInit = reinterpret_cast<nvmlInitFn>(dlsym(dlHandle, "nvmlInit"));
     QVERIFY(nvmlInit != nullptr);
 
-    // nvmlInit возвращает 0 при успехе
+    // nvmlInit returns 0 on success
     int result = nvmlInit();
     QCOMPARE(result, 0);
 
-    // Обязательно вызываем shutdown
+    // Must call shutdown
     typedef int (*nvmlShutdownFn)();
     auto nvmlShutdown = reinterpret_cast<nvmlShutdownFn>(dlsym(dlHandle, "nvmlShutdown"));
     QVERIFY(nvmlShutdown != nullptr);
@@ -216,7 +216,7 @@ void TestNvml::testNvmlDeviceCount()
     int result = nvmlDeviceGetCount(&deviceCount);
     QCOMPARE(result, 0);
 
-    // Должно быть хотя бы одно устройство
+    // There should be at least one device
     QVERIFY(deviceCount > 0);
 
     nvmlShutdown();
@@ -273,33 +273,33 @@ void TestNvml::testNvmlGetDeviceData()
     unsigned int deviceCount = 0;
     nvmlDeviceGetCount(&deviceCount);
 
-    // Тестируем первое устройство (индекс 0)
+    // Test first device (index 0)
     void* device = nullptr;
     int result = nvmlDeviceGetHandleByIndex(0, &device);
     QCOMPARE(result, 0);
     QVERIFY(device != nullptr);
 
-    // Получаем имя
+    // Get device name
     char name[64] = {0};
     result = nvmlDeviceGetName(device, name, sizeof(name));
     QCOMPARE(result, 0);
     QVERIFY(strlen(name) > 0);
     QVERIFY(!QString(name).isEmpty());
 
-    // Получаем утилизацию
+    // Get utilization rates
     struct { unsigned int gpu, memory; } util;
     result = nvmlDeviceGetUtilizationRates(device, &util);
     QCOMPARE(result, 0);
     QVERIFY(util.gpu <= 100);
     QVERIFY(util.memory <= 100);
 
-    // Получаем температуру
+    // Get temperature
     unsigned int temp = 0;
     result = nvmlDeviceGetTemperature(device, 0, &temp);
     QCOMPARE(result, 0);
-    QVERIFY(temp > 0); // Температура должна быть больше 0
+    QVERIFY(temp > 0); // Temperature should be greater than 0
 
-    // Получаем информацию о памяти
+    // Get memory info
     struct { unsigned long long total, free, used; } mem;
     result = nvmlDeviceGetMemoryInfo(device, &mem);
     QCOMPARE(result, 0);
@@ -349,7 +349,7 @@ void TestNvml::testNvmlGetDeviceName()
     result = nvmlDeviceGetName(device, name, sizeof(name));
     QCOMPARE(result, 0);
 
-    // Имя должно быть непустым и содержать название GPU
+    // Name should be non-empty and contain the GPU name
     QVERIFY(strlen(name) > 0);
     QString gpuName = QString(name);
     QVERIFY(!gpuName.isEmpty());
@@ -389,7 +389,7 @@ void TestNvml::testNvmlShutdown()
 
     nvmlInit();
 
-    // Shutdown должен завершиться успешно
+    // Shutdown should complete successfully
     int result = nvmlShutdown();
     QCOMPARE(result, 0);
 

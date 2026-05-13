@@ -1,114 +1,136 @@
 # NVIDIA GPU Monitor Plugin for LXQt Panel
 
-Плагин для панели LXQt, отображающий в виде графика метрики NVIDIA GPU:
-- **Загрузка GPU** — процент использования графического процессора
-- **Загрузка VRAM** — процент использования видеопамяти
-- **Температура GPU** — текущая температура графического процессора
+An LXQt panel plugin that displays NVIDIA GPU metrics as a scrolling graph:
+- **GPU Utilization** — GPU processing unit usage percentage
+- **VRAM Load** — memory bandwidth utilization percentage
+- **VRAM Usage Percent** — VRAM capacity used (used/total)
+- **GPU Temperature** — current GPU temperature
 
-В качестве источника данных используется библиотека NVML (`libnvidia-ml.so`), аналогично тому, как это реализовано в [btop](https://github.com/aristocratos/btop).
+Data is sourced from the NVML library (`libnvidia-ml.so`), similar to [btop](https://github.com/aristocratos/btop).
 
-## Сборка
+## Building
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH=/home/portnov/soft/lxqt
+cmake .. -DCMAKE_PREFIX_PATH=/path/to/lxqt
 make -j$(nproc)
 ```
 
-## Установка
+## Installation
 
-### Способ 1: Через CMake install
+### Method 1: CMake install
 
 ```bash
 sudo cmake --install .
 ```
 
-### Способ 2: Ручная установка
+### Method 2: Manual installation
 
 ```bash
-# Скопировать .so файл в директорию плагинов
-sudo cp nvmonitor.so /usr/lib/lxqt-panel/
+# Copy the .so file to the plugins directory
+sudo cp libnvmonitor.so /usr/lib/lxqt-panel/
 
-# Скопировать .desktop файл
+# Copy the .desktop file
 sudo cp nvmonitor.desktop /usr/share/lxqt/lxqt-panel/
 ```
 
-### Способ 3: Через переменную окружения
+> **Note:** Paths may vary by distribution. On Debian/Ubuntu the plugin directory is typically
+> `/usr/lib/x86_64-linux-gnu/lxqt-panel/` and the desktop file goes to
+> `/usr/share/lxqt/lxqt-panel/`.
+
+### Method 3: Environment variable
 
 ```bash
-# Добавить директорию с плагином в LXQT_PANEL_PLUGINS_DIR
-export LXQT_PANEL_PLUGINS_DIR="/путь/к/директории/с/плагином"
+# Add the plugin directory to LXQT_PANEL_PLUGINS_DIR
+export LXQT_PANEL_PLUGINS_DIR="/path/to/plugin/directory"
 lxqt-panel
 ```
 
-### Способ 4: Пользовательская директория
+### Method 4: User directory
 
-Поместите `.desktop` файл в:
+Place the `.desktop` file in:
 ```
 ~/.local/share/lxqt/lxqt-panel/nvmonitor.desktop
 ```
 
-Поместите `.so` файл в одну из директорий, указанных в `LXQT_PANEL_PLUGINS_DIR`.
+Place the `.so` file in one of the directories listed in `LXQT_PANEL_PLUGINS_DIR`.
 
-## Настройки
+## Configuration
 
-После добавления плагина на панель, кликните по нему правой кнопкой мыши и выберите "Настроить". Доступны следующие параметры:
+After adding the plugin to the panel, right-click on it and select "Configure". The following options are available:
 
-### Метрика
-- **GPU Utilization** — отображает загрузку GPU в процентах
-- **VRAM Utilization** — отображает использование VRAM в процентах
-- **Temperature** — отображает температуру GPU в градусах Цельсия
+### Metric
+- **GPU Utilization** — shows GPU usage percentage
+- **VRAM Load** — shows VRAM bandwidth utilization percentage
+- **VRAM Usage Percent** — shows VRAM capacity used (used/total)
+- **Temperature** — shows GPU temperature in degrees Celsius
 
-### Дисплей
-- **Update interval** — интервал обновления данных (секунды)
-- **Minimal size** — минимальный размер виджета (пиксели)
-- **History length** — количество точек в истории графика
-- **Grid lines** — количество горизонтальных линий сетки
-- **Show value on graph** — показывать текущее значение на графике
+### Display
+- **Update interval** — data refresh interval (seconds)
+- **Minimal size** — minimum widget size (pixels)
+- **History length** — number of data points in the graph history
+- **Grid lines** — number of horizontal grid lines
+- **Show value on graph** — display current value on the graph
 
-### Заголовок
-- **Label** — текст заголовка (пусто = без заголовка)
+### Title
+- **Label** — title text (empty = no title)
 
-### Цвета
-- **Use theme colors** — использовать цвета темы
-- **Graph color** — цвет графика
-- **Grid color** — цвет сетки
-- **Title color** — цвет заголовка
+### Colors
+- **Use theme colors** — use theme colors
+- **Graph color** — graph line color
+- **Grid color** — grid line color
+- **Title color** — title text color
 
-## Требования
+## Requirements
 
 - LXQt 2.4+
 - Qt 6
-- NVIDIA GPU с установленными проприетарными драйверами (для работы NVML)
-- Библиотека `libnvidia-ml.so` (обычно устанавливается вместе с драйвером NVIDIA)
+- NVIDIA GPU with proprietary drivers installed (for NVML support)
+- `libnvidia-ml.so` library (usually installed with NVIDIA drivers)
 
-## Зависимости сборки
+## Build Dependencies
 
 - CMake 3.16+
 - Qt 6 (Widgets)
 - lxqt (liblxqt)
 - KF6::WindowSystem
-- Заголовочные файлы lxqt-panel (из дерева исходников или установленные)
+- lxqt-panel headers (from source tree or installed)
 
-## Структура проекта
+## Project Structure
 
 ```
 nvmonitor/
-├── CMakeLists.txt                    # Скрипт сборки
-├── README.md                         # Этот файл
-├── nvmonitorplugin.h                 # Класс плагина + библиотека
-├── nvmonitorplugin.cpp               # Реализация плагина
-├── nvmonitor.h                       # Класс графика + обёртка NVML
-├── nvmonitor.cpp                     # Реализация графика и NVML
-├── nvmonitorconfiguration.h          # Диалог настроек
-├── nvmonitorconfiguration.cpp        # Реализация диалога настроек
-├── nvmonitorconfiguration.ui         # UI диалога настроек
+├── CMakeLists.txt                    # Build script
+├── README.md                         # This file
+├── nvmonitorplugin.h                 # Plugin + library class
+├── nvmonitorplugin.cpp               # Plugin implementation
+├── nvmonitor.h                       # Graph widget + NVML wrapper
+├── nvmonitor.cpp                     # Graph and NVML implementation
+├── nvmonitorconfiguration.h          # Configuration dialog
+├── nvmonitorconfiguration.cpp        # Configuration dialog implementation
+├── nvmonitorconfiguration.ui         # Configuration dialog UI
 ├── resources/
-│   └── nvmonitor.desktop.in          # Файл описания плагина
-└── translations/
-    └── nvmonitor.ts                  # Файл перевода (опционально)
+│   └── nvmonitor.desktop.in          # Plugin description file
+├── translations/
+│   └── nvmonitor.ts                  # Translation file (optional)
+└── tests/
+    ├── CMakeLists.txt                # Test build config
+    ├── test_nvml.cpp                 # NVML library tests
+    ├── test_settings.cpp             # Settings save/load tests
+    └── test_widget.cpp               # Widget rendering tests
 ```
 
-## Лицензия
+## Testing
 
-GNU Lesser General Public License v2.1 или новее (LGPL2+)
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_PREFIX_PATH=/path/to/lxqt -DBUILD_TESTS=ON
+make -j$(nproc)
+cd tests && ctest --verbose
+```
+
+Tests are automatically skipped on systems without NVIDIA GPU (marked as `SKIP`).
+
+## License
+
+GNU Lesser General Public License v2.1 or later (LGPL2+)

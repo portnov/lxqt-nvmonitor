@@ -35,10 +35,10 @@ class ILXQtPanelPlugin;
 class PluginSettings;
 
 /**
- * @brief Класс для получения данных с NVIDIA GPU через NVML
+ * @brief GPU data collected via NVML
  *
- * Динамически загружает libnvidia-ml.so и предоставляет метрики GPU.
- * Реализация основана на подходе, используемом в btop.
+ * Dynamically loads libnvidia-ml.so and provides GPU metrics.
+ * Implementation follows the approach used in btop.
  */
 class NvmlGpuData
 {
@@ -47,11 +47,11 @@ public:
 
     bool valid;
     QString name;
-    float gpuUtil;     // загрузка GPU, %
-    float memUtil;     // загрузка VRAM, %
-    float temp;        // температура, °C
-    qint64 memTotal;   // общий объём VRAM, bytes
-    qint64 memUsed;    // использованная VRAM, bytes
+    float gpuUtil;     // GPU utilization, %
+    float memUtil;     // VRAM bandwidth utilization, %
+    float temp;        // temperature, °C
+    qint64 memTotal;   // total VRAM, bytes
+    qint64 memUsed;    // used VRAM, bytes
 };
 
 class NvmlGpu
@@ -60,27 +60,27 @@ public:
     NvmlGpu();
     ~NvmlGpu();
 
-    // Удалить копию/присваивание (singleton-подобный класс)
+    // Disable copy/assignment (singleton-like class)
     NvmlGpu(const NvmlGpu &) = delete;
     NvmlGpu &operator=(const NvmlGpu &) = delete;
 
-    // Инициализация NVML, возвращает true при успехе
+    // Initialize NVML, returns true on success
     bool init();
 
-    // Закрыть NVML
+    // Shutdown NVML
     void shutdown();
 
-    // Получить количество GPU
+    // Get number of GPU devices
     int deviceCount() const { return m_deviceCount; }
 
-    // Получить данные GPU по индексу
+    // Get GPU data by index
     NvmlGpuData getDeviceData(int index) const;
 
-    // Получить имя GPU по индексу
+    // Get GPU name by index
     QString getDeviceName(int index) const;
 
 private:
-    // Типы функций NVML
+    // NVML type aliases
     typedef void* nvmlDevice_t;
     typedef int nvmlReturn_t;
     typedef int nvmlTemperatureSensors_t;
@@ -89,19 +89,19 @@ private:
     struct nvmlUtilization_t { unsigned int gpu, memory; };
     struct nvmlMemory_t { unsigned long long total, free, used; };
 
-    // Функциональные указатели
+    // Function pointers
     void* m_dlHandle;
     int m_deviceCount;
 
-    // Загрузка NVML
+    // NVML library loading
     bool loadLibrary();
     void unloadLibrary();
     bool loadSymbols();
 
-    // Состояние инициализации
+    // Initialization state
     bool m_initialized;
 
-    // NVML функции
+    // NVML function pointers
     nvmlReturn_t (*m_nvmlInit)();
     nvmlReturn_t (*m_nvmlShutdown)();
     nvmlReturn_t (*m_nvmlDeviceGetCount)(unsigned int*);
@@ -111,15 +111,15 @@ private:
     nvmlReturn_t (*m_nvmlDeviceGetTemperature)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int*);
     nvmlReturn_t (*m_nvmlDeviceGetMemoryInfo)(nvmlDevice_t, nvmlMemory_t*);
 
-    // Константы NVML
+    // NVML constants
     static const unsigned int NVML_TEMPERATURE_GPU = 0;
 };
 
 /**
- * @brief Виджет отображения графика метрик NVIDIA GPU
+ * @brief Widget displaying NVIDIA GPU metrics as a scrolling graph
  *
- * Анализирует данные GPU и отображает их в виде графика,
- * аналогично плагину sysstat из lxqt-panel.
+ * Collects GPU data and renders it as a graph,
+ * similar to the sysstat plugin from lxqt-panel.
  */
 class NvMonitorContent : public QWidget
 {
@@ -132,10 +132,10 @@ class NvMonitorContent : public QWidget
 
 public:
     enum GpuMetric {
-        GpuUtilization,    // Загрузка GPU (%) — bandwidth utilization
-        MemUtilization,    // Нагрузка VRAM (%) — memory bandwidth utilization
-        VramUsage,         // Использование VRAM (%) — used/total capacity
-        Temperature        // Температура (°C)
+        GpuUtilization,    // GPU utilization (%) — compute unit bandwidth
+        MemUtilization,    // VRAM load (%) — memory bandwidth utilization
+        VramUsage,         // VRAM usage (%) — used/total capacity
+        Temperature        // Temperature (°C)
     };
     Q_ENUM(GpuMetric)
 
@@ -177,7 +177,7 @@ private:
 
     ILXQtPanelPlugin *mPlugin;
 
-    // Настройки
+    // Settings
     GpuMetric mMetric;
     int mUpdateInterval;
     int mMinimalSize;
@@ -189,27 +189,27 @@ private:
     int mMaxHistory;
     bool mUseThemeColors;
 
-    // Цвета
+    // Colors
     QColor mGraphColor;
     QColor mBackgroundColor;
     QColor mGridColor;
     QColor mTitleColor;
 
-    // Данные
+    // Data
     NvmlGpu mGpu;
     NvmlGpuData mGpuData;
     QVector<float> mHistory;
     int mHistoryOffset;
     QImage mHistoryImage;
 
-    // Таймер
+    // Timer
     int mTimerId;
     bool mTimerStarted;
 
-    // Текущее значение для отображения
+    // Current value for display
     float mCurrentValue;
 
-    // Состояние NVML
+    // NVML state
     bool mNvmlAvailable;
 };
 

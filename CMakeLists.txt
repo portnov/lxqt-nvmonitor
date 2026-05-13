@@ -7,9 +7,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# Путь к установленным библиотекам lxqt (по умолчанию — системный, можно переопределить)
-set(LXQT_INSTALL_PREFIX "/home/portnov/soft/lxqt" CACHE PATH "Путь к установленным библиотекам lxqt")
-set(CMAKE_PREFIX_PATH "${LXQT_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
+# Path to installed lxqt libraries (override with -DLXQT_INSTALL_PREFIX=/path/to/lxqt)
+set(LXQT_INSTALL_PREFIX "" CACHE PATH "Path to installed lxqt libraries (empty = system default)")
+if(NOT LXQT_INSTALL_PREFIX STREQUAL "")
+    set(CMAKE_PREFIX_PATH "${LXQT_INSTALL_PREFIX}" ${CMAKE_PREFIX_PATH})
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(lxqt REQUIRED)
@@ -30,12 +32,12 @@ set(UIS
     nvmonitorconfiguration.ui
 )
 
-# Динамическая библиотека (плагин)
+# Shared library (plugin)
 add_library(nvmonitor MODULE ${HEADERS} ${SOURCES} ${UIS})
 
-# Заголовки lxqt-panel не устанавливаются в систему отдельно,
-# поэтому всегда используем дерево исходников.
-set(LXQT_PANEL_SRC_DIR "${CMAKE_SOURCE_DIR}/../lxqt-panel")
+# lxqt-panel headers are not installed system-wide,
+# so we use the source tree (override with -DLXQT_PANEL_SRC_DIR=/path/to/lxqt-panel)
+set(LXQT_PANEL_SRC_DIR "${CMAKE_SOURCE_DIR}/../lxqt-panel" CACHE PATH "Path to lxqt-panel source tree")
 include_directories("${LXQT_PANEL_SRC_DIR}/panel")
 
 target_link_libraries(nvmonitor
@@ -48,14 +50,14 @@ set_target_properties(nvmonitor PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
-# Генерируем .desktop файл из .desktop.in
+# Generate .desktop file from .desktop.in
 configure_file(resources/nvmonitor.desktop.in nvmonitor.desktop @ONLY)
 
-# Установка
+# Installation
 install(TARGETS nvmonitor DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/lxqt-panel/")
 install(FILES "${CMAKE_BINARY_DIR}/nvmonitor.desktop" DESTINATION "${CMAKE_INSTALL_PREFIX}/share/lxqt/lxqt-panel/")
 
-# Тесты (опционально, требуются Qt6Test)
+# Tests (optional, requires Qt6Test)
 option(BUILD_TESTS "Build tests for the plugin" ON)
 if(BUILD_TESTS)
     add_subdirectory(tests)

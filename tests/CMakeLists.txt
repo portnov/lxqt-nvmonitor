@@ -1,15 +1,15 @@
-# Тесты для плагина nvmonitor
+# Tests for the nvmonitor plugin
 
 find_package(Qt6Test REQUIRED)
 
-# Макрос для создания тестовых исполняемых файлов
+# Macro to create test executables
 macro(add_test_executable _executable)
     add_executable(${_executable} ${ARGN})
     add_test(${_executable} ${_executable})
 endmacro(add_test_executable)
 
 # ============================================================================
-# Тест 1: Тестирование NVML (загрузка библиотеки и получение данных GPU)
+# Test 1: NVML library loading and GPU data retrieval
 # ============================================================================
 set(nvml_test_SRCS
     test_nvml.cpp
@@ -24,7 +24,7 @@ target_link_libraries(test_nvml
 )
 
 # ============================================================================
-# Тест 2: Тестирование настроек (сохранение/загрузка)
+# Test 2: Settings save/load
 # ============================================================================
 set(settings_test_SRCS
     test_settings.cpp
@@ -38,7 +38,7 @@ target_link_libraries(test_settings
 )
 
 # ============================================================================
-# Тест 3: Тестирование виджета графика
+# Test 3: Graph widget rendering
 # ============================================================================
 set(widget_test_SRCS
     test_widget.cpp
@@ -51,5 +51,5 @@ target_link_libraries(test_widget
     Qt6::Core
 )
 
-# Включаем тестирование
+# Enable testing
 enable_testing()

@@ -13,70 +13,70 @@
 #include <QCoreApplication>
 
 /**
- * Тесты для проверки сохранения и загрузки настроек плагина nvmonitor.
+ * Tests for nvmonitor plugin settings save/load.
  *
- * Эти тесты проверяют:
- * 1. Сохранение метрики (gpuUtilization, memUtilization, temperature)
- * 2. Сохранение интервала обновления
- * 3. Сохранение цветов (графика, сетки, заголовка)
- * 4. Сохранение параметров отображения (показ значения, заголовок)
- * 5. Сохранение параметров графика (длина истории, минимальный размер, линии сетки)
- * 6. Значения по умолчанию
+ * These tests verify:
+ * 1. Metric saving (gpuUtilization, memUtilization, temperature)
+ * 2. Update interval saving
+ * 3. Color saving (graph, grid, title)
+ * 4. Display settings saving (show value, title)
+ * 5. Graph settings saving (history length, minimal size, grid lines)
+ * 6. Default values
  */
 class TestSettings : public QObject
 {
     Q_OBJECT
 
 private slots:
-    // Инициализация и очистка
+    // Initialization and cleanup
     void init();
     void cleanup();
 
-    // Тесты значений по умолчанию
+    // Default value tests
     void testDefaultSettings_data();
     void testDefaultSettings();
 
-    // Тесты метрики
+    // Metric tests
     void testMetricGpuUtilization();
     void testMetricMemUtilization();
     void testMetricTemperature();
 
-    // Тесты интервала обновления
+    // Update interval tests
     void testUpdateInterval();
 
-    // Тесты цветов
+    // Color tests
     void testGraphColor();
     void testGridColor();
     void testTitleColor();
 
-    // Тесты параметров отображения
+    // Display setting tests
     void testShowValue();
     void testTitleLabel();
 
-    // Тесты параметров графика
+    // Graph setting tests
     void testGridLines();
     void testMaxHistory();
     void testMinimalSize();
 
-    // Тесты комплексной загрузки/сохранения
+    // Full save/load roundtrip test
     void testFullSettingsRoundtrip();
 
 private:
     QString mSettingsFile;
 
-    // Вспомогательная функция: создаёт QSettings с временным файлом
+    // Helper: create QSettings with temporary file
     QSettings& createSettings();
 
-    // Вспомогательная функция: получает значение метрики
+    // Helper: get metric value
     QString getMetric(QSettings& settings);
 
-    // Вспомогательная функция: устанавливает значение метрики
+    // Helper: set metric value
     void setMetric(QSettings& settings, const QString& metric);
 };
 
 void TestSettings::init()
 {
-    // Создаём временный файл настроек
+    // Create temporary settings file
     mSettingsFile = QCoreApplication::applicationDirPath() + "/nvmonitor_test_settings.ini";
     if (QFile::exists(mSettingsFile)) {
         QFile::remove(mSettingsFile);
@@ -85,7 +85,7 @@ void TestSettings::init()
 
 void TestSettings::cleanup()
 {
-    // Удаляем временный файл настроек
+    // Remove temporary settings file
     if (QFile::exists(mSettingsFile)) {
         QFile::remove(mSettingsFile);
     }
@@ -93,12 +93,12 @@ void TestSettings::cleanup()
 
 QSettings& TestSettings::createSettings()
 {
-    // Статический QSettings с нашим временным файлом
+    // Static QSettings with our temporary file
     static QSettings* settings = nullptr;
     if (!settings) {
         settings = new QSettings(mSettingsFile, QSettings::IniFormat);
     } else {
-        // Сбрасываем для нового теста
+        // Reset for new test
         settings->clear();
         settings->sync();
     }
@@ -186,7 +186,7 @@ void TestSettings::testUpdateInterval()
 {
     QSettings& settings = createSettings();
 
-    // Устанавливаем разные значения интервала
+    // Set different interval values
     settings.setValue("graph/updateInterval", 500);
     QCOMPARE(settings.value("graph/updateInterval").toInt(), 500);
 
@@ -201,7 +201,7 @@ void TestSettings::testGraphColor()
 {
     QSettings& settings = createSettings();
 
-    // Устанавливаем разные цвета
+    // Set different colors
     settings.setValue("graph/color", "#00ff00");
     QCOMPARE(settings.value("graph/color").toString(), QString("#00ff00"));
 
@@ -211,7 +211,7 @@ void TestSettings::testGraphColor()
     settings.setValue("graph/color", "#ffffff");
     QCOMPARE(settings.value("graph/color").toString(), QString("#ffffff"));
 
-    // Проверяем значение по умолчанию
+    // Check default value
     QSettings emptySettings(mSettingsFile + "_empty", QSettings::IniFormat);
     emptySettings.clear();
     QCOMPARE(emptySettings.value("graph/color", "#ff0000").toString(), QString("#ff0000"));
@@ -260,7 +260,7 @@ void TestSettings::testTitleLabel()
     settings.setValue("title/label", "NVIDIA GPU");
     QCOMPARE(settings.value("title/label").toString(), QString("NVIDIA GPU"));
 
-    // Пустой заголовок
+    // Empty title
     settings.setValue("title/label", QString());
     QVERIFY(settings.value("title/label").toString().isEmpty());
 }
@@ -311,7 +311,7 @@ void TestSettings::testFullSettingsRoundtrip()
 {
     QSettings& settings = createSettings();
 
-    // Сохраняем полный набор настроек
+    // Save full settings set
     settings.setValue("data/metric", "temperature");
     settings.setValue("graph/updateInterval", 2000);
     settings.setValue("graph/minimalSize", 50);
@@ -323,7 +323,7 @@ void TestSettings::testFullSettingsRoundtrip()
     settings.setValue("title/color", "#eeeeee");
     settings.setValue("title/label", "GPU Temp");
 
-    // Загружаем и проверяем
+    // Load and verify
     QCOMPARE(getMetric(settings), QString("temperature"));
     QCOMPARE(settings.value("graph/updateInterval").toInt(), 2000);
     QCOMPARE(settings.value("graph/minimalSize").toInt(), 50);
@@ -335,11 +335,11 @@ void TestSettings::testFullSettingsRoundtrip()
     QCOMPARE(settings.value("title/color").toString(), QString("#eeeeee"));
     QCOMPARE(settings.value("title/label").toString(), QString("GPU Temp"));
 
-    // Проверяем синхронизацию с файлом
+    // Check file synchronization
     settings.sync();
     QVERIFY(QFile::exists(mSettingsFile));
 
-    // Загружаем из нового QSettings (симуляция перезапуска)
+    // Load from new QSettings (simulating restart)
     QSettings freshSettings(mSettingsFile, QSettings::IniFormat);
     QCOMPARE(freshSettings.value("data/metric").toString(), QString("temperature"));
     QCOMPARE(freshSettings.value("graph/updateInterval").toInt(), 2000);

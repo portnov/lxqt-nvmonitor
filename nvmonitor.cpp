@@ -38,7 +38,7 @@
 #include <algorithm>
 
 // ============================================================================
-// NvmlGpu - обёртка над NVML
+// NvmlGpu — NVML wrapper
 // ============================================================================
 
 NvmlGpu::NvmlGpu()
@@ -58,14 +58,14 @@ NvmlGpu::NvmlGpu()
 
 NvmlGpu::~NvmlGpu()
 {
-    // m_nvmlShutdown обнуляется в shutdown() и при ошибках init()
-    // unloadLibrary() безопасен при m_dlHandle == nullptr
+    // m_nvmlShutdown is nullified in shutdown() and on init() errors
+    // unloadLibrary() is safe when m_dlHandle == nullptr
     unloadLibrary();
 }
 
 bool NvmlGpu::loadLibrary()
 {
-    // Пробуем загрузить библиотеку NVML
+    // Try to load the NVML library
     m_dlHandle = dlopen("libnvidia-ml.so", RTLD_LAZY);
     if (!m_dlHandle) {
         m_dlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
@@ -101,7 +101,7 @@ bool NvmlGpu::loadSymbols()
 bool NvmlGpu::init()
 {
     if (m_initialized) {
-        return m_deviceCount > 0;  // Уже инициализирована
+        return m_deviceCount > 0;  // Already initialized
     }
 
     if (!loadLibrary()) {
@@ -110,13 +110,13 @@ bool NvmlGpu::init()
 
     if (!loadSymbols()) {
         unloadLibrary();
-        m_nvmlShutdown = nullptr;  // Предотвращаем вызов в деструкторе
+        m_nvmlShutdown = nullptr;  // Prevent destructor call
         return false;
     }
 
     nvmlReturn_t result = m_nvmlInit();
     if (result != 0) {
-        // nvmlInit не удался — вызываем shutdown для корректного cleanup
+        // nvmlInit failed — call shutdown for proper cleanup
         if (m_nvmlShutdown) {
             m_nvmlShutdown();
             m_nvmlShutdown = nullptr;
@@ -192,14 +192,14 @@ NvmlGpuData NvmlGpu::getDeviceData(int index) const
         return data;
     }
 
-    // Получаем имя
+    // Get device name
     char name[64];
     if (m_nvmlDeviceGetName) {
         m_nvmlDeviceGetName(device, name, sizeof(name));
         data.name = QString(name);
     }
 
-    // Получаем утилизацию GPU и памяти
+    // Get GPU and memory utilization
     nvmlUtilization_t util;
     result = m_nvmlDeviceGetUtilizationRates(device, &util);
     if (result == 0) {
@@ -208,14 +208,14 @@ NvmlGpuData NvmlGpu::getDeviceData(int index) const
         data.valid = true;
     }
 
-    // Получаем температуру
+    // Get temperature
     unsigned int temp = 0;
     result = m_nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temp);
     if (result == 0) {
         data.temp = static_cast<float>(temp);
     }
 
-    // Получаем информацию о памяти
+    // Get memory info
     nvmlMemory_t mem;
     result = m_nvmlDeviceGetMemoryInfo(device, &mem);
     if (result == 0) {
@@ -227,7 +227,7 @@ NvmlGpuData NvmlGpu::getDeviceData(int index) const
 }
 
 // ============================================================================
-// NvMonitorContent - виджет графика
+// NvMonitorContent — graph widget
 // ============================================================================
 
 NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
@@ -257,7 +257,7 @@ NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
     setObjectName(QStringLiteral("NvMonitor_Graph"));
     setMouseTracking(true);
 
-    // Инициализируем NVML
+    // Initialize NVML
     mNvmlAvailable = mGpu.init();
 
     if (mNvmlAvailable && mGpu.deviceCount() > 0) {
@@ -287,7 +287,7 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     mShowValue = settings->value(QStringLiteral("graph/showValue"), false).toBool();
     mMaxHistory = settings->value(QStringLiteral("graph/maxHistory"), 100).toInt();
 
-    // Применяем тему или пользовательские цвета
+    // Apply theme or custom colors
     if (mUseThemeColors) {
         applyThemeColors();
     } else {
@@ -296,7 +296,7 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
         mTitleColor = QColor(settings->value(QStringLiteral("title/color"), QStringLiteral("#ffffff")).toString());
     }
 
-    // Метрика
+    // Metric
     QString metricStr = settings->value(QStringLiteral("data/metric"), QStringLiteral("gpuUtilization")).toString();
     if (metricStr == QLatin1String("memUtilization")) {
         mMetric = NvMonitorContent::MemUtilization;
@@ -308,10 +308,10 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
         mMetric = NvMonitorContent::GpuUtilization;
     }
 
-    // Обновляем шрифт заголовка
+    // Update title font
     if (!mTitleLabel.isEmpty()) {
         if (mTitleFontPixelHeight <= 0) {
-            // Шрифт ещё не инициализирован — берём системный
+            // Font not yet initialized — use system font
             mTitleFont = QFont();
             mTitleFont.setBold(true);
             mTitleFont.setPixelSize(12);
@@ -322,17 +322,17 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
         mTitleFontPixelHeight = 0;
     }
 
-    // Запускаем таймер, если ещё не запущен
+    // Start timer if not already running
     if (!mTimerStarted) {
         mTimerId = startTimer(mUpdateInterval);
         mTimerStarted = true;
     } else {
-        // Перезапускаем таймер при изменении интервала
+        // Restart timer when interval changes
         killTimer(mTimerId);
         mTimerId = startTimer(mUpdateInterval);
     }
 
-    // Пересоздаём историю при изменении размера или метрики
+    // Recreate history when size or metric changes
     if (oldMetric != mMetric || mMaxHistory != static_cast<int>(mHistory.size())) {
         reset();
     } else {
@@ -349,7 +349,7 @@ void NvMonitorContent::reset()
     mHistoryOffset = 0;
     mHistoryImage = QImage();
 
-    // Создаём новое изображение для истории
+    // Create new history image
     if (width() > 0) {
         mHistoryImage = QImage(width(), 100, QImage::Format_ARGB32);
         mHistoryImage.fill(Qt::transparent);
@@ -360,16 +360,16 @@ void NvMonitorContent::reset()
 
 void NvMonitorContent::applyThemeColors()
 {
-    // Используем палитру виджета для получения системных цветов
+    // Use widget palette for system colors
     QPalette pal = palette();
-    mGraphColor = pal.color(QPalette::Text);        // Текст графика
-    mGridColor = pal.color(QPalette::Mid);           // Сетка
-    mTitleColor = pal.color(QPalette::WindowText);   // Заголовок
+    mGraphColor = pal.color(QPalette::Text);        // Graph text
+    mGridColor = pal.color(QPalette::Mid);           // Grid
+    mTitleColor = pal.color(QPalette::WindowText);   // Title
 }
 
 void NvMonitorContent::collectData()
 {
-    // NVML уже инициализирована в конструкторе, просто получаем данные
+    // NVML is already initialized in the constructor, just collect data
     if (mNvmlAvailable && mGpu.deviceCount() > 0) {
         mGpuData = mGpu.getDeviceData(0);
     }
@@ -394,11 +394,11 @@ void NvMonitorContent::updateGraph()
             tooltip = tr("VRAM load: %1%").arg(static_cast<int>(value));
             break;
         case NvMonitorContent::VramUsage: {
-            // Процент использованной VRAM (capacity): used / total * 100
+            // VRAM usage percentage (capacity): used / total * 100
             if (mGpuData.memTotal > 0) {
                 value = static_cast<float>(mGpuData.memUsed) * 100.0f / static_cast<float>(mGpuData.memTotal);
             }
-            // Форматируем объём: ГБ с одной цифрой после запятой
+            // Format size: GB with one decimal place
             double usedGB = static_cast<double>(mGpuData.memUsed) / (1024.0 * 1024.0 * 1024.0);
             double totalGB = static_cast<double>(mGpuData.memTotal) / (1024.0 * 1024.0 * 1024.0);
             tooltip = tr("VRAM: %1% (%2 / %3 GB)")
@@ -415,18 +415,18 @@ void NvMonitorContent::updateGraph()
 
     mCurrentValue = value;
 
-    // Ограничиваем значение в пределах [0, 100]
+    // Clamp value to [0, 100]
     value = std::clamp(value, 0.0f, 100.0f);
 
-    // Добавляем в историю
+    // Append to history
     mHistory.append(value);
 
-    // Ограничиваем размер истории
+    // Limit history size
     while (mHistory.size() > mMaxHistory) {
         mHistory.removeFirst();
     }
 
-    // Обновляем изображение истории
+    // Update history image
     clearHistory();
 
     QPainter painter(&mHistoryImage);
@@ -436,8 +436,8 @@ void NvMonitorContent::updateGraph()
         painter.drawLine(mHistoryOffset, 100 - y, mHistoryOffset, 100);
     }
 
-    // Защита от деления на ноль: mHistoryImage.width() может быть 0
-    // если resizeEvent был вызван с нулевой шириной
+    // Guard against division by zero: mHistoryImage.width() may be 0
+    // if resizeEvent was called with zero width
     if (mHistoryImage.width() > 0) {
         mHistoryOffset = (mHistoryOffset + 1) % mHistoryImage.width();
     }
@@ -451,8 +451,8 @@ void NvMonitorContent::updateGraph()
 
 void NvMonitorContent::clearHistory()
 {
-    // Очищаем один столбец пикселей в mHistoryImage на позиции mHistoryOffset
-    // Используем setPixel для безопасности (не зависит от формата пикселя)
+    // Clear one column of pixels in mHistoryImage at mHistoryOffset position
+    // Uses setPixel for safety (independent of pixel format)
     QRgb bg = QColor(Qt::transparent).rgba();
     for (int i = 0; i < 100 && i < mHistoryImage.height(); ++i) {
         mHistoryImage.setPixel(mHistoryOffset, i, bg);
@@ -477,18 +477,18 @@ void NvMonitorContent::paintEvent(QPaintEvent *event)
     if (graphHeight < 1)
         graphHeight = 1;
 
-    // Рисуем заголовок
+    // Draw title
     if (hasTitle) {
         drawTitle(p);
     }
 
-    // Рисуем сетку
+    // Draw grid
     drawGrid(p);
 
-    // Рисуем график
+    // Draw graph
     drawGraph(p);
 
-    // Рисуем текущее значение
+    // Draw current value
     if (mShowValue) {
         drawValue(p);
     }
@@ -510,7 +510,7 @@ void NvMonitorContent::drawGrid(QPainter &p)
     qreal graphTop = mTitleFontPixelHeight;
     qreal graphHeight = height() - graphTop;
 
-    // Линия 0% (верх графика при вертикальной ориентации)
+    // 0% line (top of the graph)
     p.drawLine(QPointF(0.0, graphTop + 0.5), QPointF(w, graphTop + 0.5));
 
     for (int l = 0; l < mGridLines; ++l) {
@@ -529,21 +529,21 @@ void NvMonitorContent::drawGraph(QPainter &p)
     qreal graphHeight = height() - graphTop;
 
     p.save();
-    // Сдвигаем начало координат в верхнюю границу графика.
-    // mHistoryImage уже имеет правильную ориентацию:
-    //   y=0  → значение 100% (верх)
-    //   y=100 → значение 0%  (низ)
-    // drawImage автоматически растянёт источник (100px) до цели (graphHeight px).
+    // Move origin to the top edge of the graph area.
+    // mHistoryImage already has correct orientation:
+    //   y=0   → 100% value (top)
+    //   y=100 → 0% value   (bottom)
+    // drawImage automatically stretches source (100px) to target (graphHeight px).
     p.translate(0, graphTop);
 
-    // Правая часть (начало истории — самые свежие данные)
+    // Right part (start of history — most recent data)
     int visibleWidth = mHistoryImage.width() - mHistoryOffset;
     if (visibleWidth > 0) {
         p.drawImage(QRect(0, 0, visibleWidth, graphHeight), mHistoryImage,
                     QRect(mHistoryOffset, 0, visibleWidth, 100));
     }
 
-    // Левая часть (конец истории — обёртка по кругу)
+    // Left part (end of history — wraps around)
     if (mHistoryOffset > 0) {
         p.drawImage(QRect(width() - mHistoryOffset, 0, mHistoryOffset, graphHeight), mHistoryImage,
                     QRect(0, 0, mHistoryOffset, 100));
@@ -595,7 +595,7 @@ void NvMonitorContent::timerEvent(QTimerEvent *event)
 bool NvMonitorContent::event(QEvent *event)
 {
     if (event->type() == QEvent::FontChange) {
-        // Обновляем высоту шрифта заголовка
+        // Update title font height
         if (!mTitleLabel.isEmpty() && mTitleFontPixelHeight > 0) {
             QFontMetrics fm(mTitleFont);
             mTitleFontPixelHeight = fm.height();

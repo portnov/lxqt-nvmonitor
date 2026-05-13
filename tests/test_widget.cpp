@@ -14,41 +14,41 @@
 #include <QSize>
 
 /**
- * Тесты для виджета NvMonitorContent.
+ * Tests for the NvMonitorContent widget.
  *
- * Эти тесты проверяют:
- * 1. Создание и удаление виджета
- * 2. Обработку событий изменения размера
- * 3. Отрисовку (paintEvent)
- * 4. Обработку таймеров
+ * These tests verify:
+ * 1. Widget creation and destruction
+ * 2. Resize event handling
+ * 3. Rendering (paintEvent)
+ * 4. Timer handling
  *
- * Примечание: Для тестирования виджетов требуется X11/Wayland.
- * Если графическая среда недоступна, тесты пропускаются.
+ * Note: Widget testing requires X11/Wayland.
+ * Tests are skipped if the graphics environment is not available.
  */
 class TestWidget : public QObject
 {
     Q_OBJECT
 
 private slots:
-    // Инициализация и очистка
+    // Initialization and cleanup
     void initTestCase();
     void cleanupTestCase();
     void init();
     void cleanup();
 
-    // Тесты создания
+    // Creation tests
     void testWidgetCreation();
     void testWidgetDefaultSize();
 
-    // Тесты изменения размера
+    // Resize tests
     void testWidgetResize_horizontal();
     void testWidgetResize_vertical();
 
-    // Тесты отрисовки
+    // Rendering tests
     void testWidgetPaint_noData();
     void testWidgetPaint_withTitle();
 
-    // Тесты обработки событий
+    // Event handling tests
     void testWidgetMouseEvent();
 
 private:
@@ -57,14 +57,14 @@ private:
 
 bool TestWidget::isDisplayAvailable()
 {
-    // Проверяем, доступен ли дисплей
+    // Check if display is available
     return QGuiApplication::instance() != nullptr;
 }
 
 void TestWidget::initTestCase()
 {
-    // QApplication нужно только для GUI-тестов
-    // Создаём один раз для всех тестов
+    // QApplication is only needed for GUI tests
+    // Created once for all tests
 }
 
 void TestWidget::cleanupTestCase()
@@ -73,7 +73,7 @@ void TestWidget::cleanupTestCase()
 
 void TestWidget::init()
 {
-    // Очищаем состояние перед каждым тестом
+    // Clear state before each test
 }
 
 void TestWidget::cleanup()
@@ -82,21 +82,21 @@ void TestWidget::cleanup()
 
 void TestWidget::testWidgetCreation()
 {
-    // Простая проверка: виджет должен создаваться без исключений
+    // Simple check: widget should be created without exceptions
     QVERIFY(true);
 
-    // В реальном тесте мы бы создали виджет:
+    // In a real test we would create the widget:
     // NvMonitorContent content(nullptr);
     // QVERIFY(content.isValid());
-    // QVERIFY(content.size().isEmpty()); // Начальный размер 0x0
+    // QVERIFY(content.size().isEmpty()); // Initial size 0x0
 }
 
 void TestWidget::testWidgetDefaultSize()
 {
-    // Виджет по умолчанию должен иметь минимальный размер
+    // Widget should have a minimum size by default
     QVERIFY(true);
 
-    // В реальном тесте:
+    // In a real test:
     // NvMonitorContent content(nullptr);
     // QSize defaultSize = content.size();
     // QVERIFY(defaultSize.width() >= 0);
@@ -107,7 +107,7 @@ void TestWidget::testWidgetResize_horizontal()
 {
     QVERIFY(true);
 
-    // В реальном тесте:
+    // In a real test:
     // NvMonitorContent content(nullptr);
     // QSize originalSize = content.size();
     // content.resize(200, 30);
@@ -119,7 +119,7 @@ void TestWidget::testWidgetResize_vertical()
 {
     QVERIFY(true);
 
-    // В реальном тесте:
+    // In a real test:
     // NvMonitorContent content(nullptr);
     // content.resize(30, 200);
     // QVERIFY(content.width() == 30);
@@ -130,21 +130,21 @@ void TestWidget::testWidgetPaint_noData()
 {
     QVERIFY(true);
 
-    // В реальном тесте проверяем, что paintEvent не вызывает ошибок
-    // даже когда нет данных GPU:
+    // In a real test, verify that paintEvent doesn't cause errors
+    // even when there's no GPU data:
     // NvMonitorContent content(nullptr);
     // content.resize(100, 30);
     // QBitmap bitmap(content.size());
     // bitmap.fill(0);
     // QPainter painter(&bitmap);
-    // content.paintEvent(nullptr); // Не должно вызывать исключений
+    // content.paintEvent(nullptr); // Should not throw exceptions
 }
 
 void TestWidget::testWidgetPaint_withTitle()
 {
     QVERIFY(true);
 
-    // В реальном тесте:
+    // In a real test:
     // NvMonitorContent content(nullptr);
     // content.setTitle("GPU Monitor");
     // content.resize(100, 50);
@@ -159,7 +159,7 @@ void TestWidget::testWidgetMouseEvent()
 {
     QVERIFY(true);
 
-    // В реальном тесте проверяем обработку мышиных событий:
+    // In a real test, verify mouse event handling:
     // NvMonitorContent content(nullptr);
     // content.resize(100, 30);
     // QMouseEvent hoverEvent(QEvent::MouseMove, QPointF(50, 15), Qt::NoButton, Qt::NoButton, Qt::NoModifier);
