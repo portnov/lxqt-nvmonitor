@@ -29,7 +29,7 @@
 #include <QWidget>
 #include <QColor>
 #include <QImage>
-#include <QVector>
+#include <QLibrary>
 
 class ILXQtPanelPlugin;
 class PluginSettings;
@@ -89,8 +89,8 @@ private:
     struct nvmlUtilization_t { unsigned int gpu, memory; };
     struct nvmlMemory_t { unsigned long long total, free, used; };
 
-    // Function pointers
-    void* m_dlHandle;
+    // NVML library
+    QLibrary m_lib;
     int m_deviceCount;
 
     // NVML library loading

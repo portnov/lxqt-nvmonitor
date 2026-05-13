@@ -32,7 +32,6 @@
 #include <QResizeEvent>
 #include <QTimer>
 #include <QCoreApplication>
-#include <dlfcn.h>
 #include <qmath.h>
 #include <cmath>
 #include <algorithm>
@@ -42,8 +41,7 @@
 // ============================================================================
 
 NvmlGpu::NvmlGpu()
-    : m_dlHandle(nullptr)
-    , m_deviceCount(0)
+    : m_deviceCount(0)
     , m_nvmlInit(nullptr)
     , m_nvmlShutdown(nullptr)
     , m_nvmlDeviceGetCount(nullptr)
@@ -58,42 +56,37 @@ NvmlGpu::NvmlGpu()
 
 NvmlGpu::~NvmlGpu()
 {
-    // m_nvmlShutdown is nullified in shutdown() and on init() errors
-    // unloadLibrary() is safe when m_dlHandle == nullptr
     unloadLibrary();
 }
 
 bool NvmlGpu::loadLibrary()
 {
     // Try to load the NVML library
-    m_dlHandle = dlopen("libnvidia-ml.so", RTLD_LAZY);
-    if (!m_dlHandle) {
-        m_dlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
-    }
-    if (!m_dlHandle) {
-        return false;
+    m_lib.setFileName("libnvidia-ml.so");
+    if (!m_lib.load()) {
+        m_lib.setFileName("libnvidia-ml.so.1");
+        return m_lib.load();
     }
     return true;
 }
 
 void NvmlGpu::unloadLibrary()
 {
-    if (m_dlHandle) {
-        dlclose(m_dlHandle);
-        m_dlHandle = nullptr;
+    if (m_lib.isLoaded()) {
+        m_lib.unload();
     }
 }
 
 bool NvmlGpu::loadSymbols()
 {
-    if (!(m_nvmlInit = (decltype(m_nvmlInit))dlsym(m_dlHandle, "nvmlInit"))) return false;
-    if (!(m_nvmlShutdown = (decltype(m_nvmlShutdown))dlsym(m_dlHandle, "nvmlShutdown"))) return false;
-    if (!(m_nvmlDeviceGetCount = (decltype(m_nvmlDeviceGetCount))dlsym(m_dlHandle, "nvmlDeviceGetCount"))) return false;
-    if (!(m_nvmlDeviceGetHandleByIndex = (decltype(m_nvmlDeviceGetHandleByIndex))dlsym(m_dlHandle, "nvmlDeviceGetHandleByIndex"))) return false;
-    if (!(m_nvmlDeviceGetName = (decltype(m_nvmlDeviceGetName))dlsym(m_dlHandle, "nvmlDeviceGetName"))) return false;
-    if (!(m_nvmlDeviceGetUtilizationRates = (decltype(m_nvmlDeviceGetUtilizationRates))dlsym(m_dlHandle, "nvmlDeviceGetUtilizationRates"))) return false;
-    if (!(m_nvmlDeviceGetTemperature = (decltype(m_nvmlDeviceGetTemperature))dlsym(m_dlHandle, "nvmlDeviceGetTemperature"))) return false;
-    if (!(m_nvmlDeviceGetMemoryInfo = (decltype(m_nvmlDeviceGetMemoryInfo))dlsym(m_dlHandle, "nvmlDeviceGetMemoryInfo"))) return false;
+    if (!(m_nvmlInit = (decltype(m_nvmlInit))m_lib.resolve("nvmlInit"))) return false;
+    if (!(m_nvmlShutdown = (decltype(m_nvmlShutdown))m_lib.resolve("nvmlShutdown"))) return false;
+    if (!(m_nvmlDeviceGetCount = (decltype(m_nvmlDeviceGetCount))m_lib.resolve("nvmlDeviceGetCount"))) return false;
+    if (!(m_nvmlDeviceGetHandleByIndex = (decltype(m_nvmlDeviceGetHandleByIndex))m_lib.resolve("nvmlDeviceGetHandleByIndex"))) return false;
+    if (!(m_nvmlDeviceGetName = (decltype(m_nvmlDeviceGetName))m_lib.resolve("nvmlDeviceGetName"))) return false;
+    if (!(m_nvmlDeviceGetUtilizationRates = (decltype(m_nvmlDeviceGetUtilizationRates))m_lib.resolve("nvmlDeviceGetUtilizationRates"))) return false;
+    if (!(m_nvmlDeviceGetTemperature = (decltype(m_nvmlDeviceGetTemperature))m_lib.resolve("nvmlDeviceGetTemperature"))) return false;
+    if (!(m_nvmlDeviceGetMemoryInfo = (decltype(m_nvmlDeviceGetMemoryInfo))m_lib.resolve("nvmlDeviceGetMemoryInfo"))) return false;
 
     return true;
 }
