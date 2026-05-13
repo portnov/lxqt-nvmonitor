@@ -136,7 +136,8 @@ void NvMonitorConfiguration::loadSettings()
     int metricIndex = ui->metricCOB->findData(metric);
     ui->metricCOB->setCurrentIndex(metricIndex >= 0 ? metricIndex : 0);
 
-    ui->updateIntervalDSB->setValue(settings().value(QStringLiteral("graph/updateInterval"), 1.0).toDouble());
+    // Stored in ms, spinbox shows seconds — convert back
+    ui->updateIntervalDSB->setValue(settings().value(QStringLiteral("graph/updateInterval"), 1000).toDouble() / 1000.0);
     ui->showValueCB->setChecked(settings().value(QStringLiteral("graph/showValue"), false).toBool());
     ui->useThemeColorsCB->setChecked(settings().value(QStringLiteral("graph/useThemeColors"), true).toBool());
 
