@@ -156,6 +156,9 @@ public:
     QColor titleColor() const { return mTitleColor; }
     void setTitleColor(QColor value) { mTitleColor = value; update(); }
 
+    QColor valueColor() const { return mValueColor; }
+    void setValueColor(QColor value) { mValueColor = value; update(); }
+
 public slots:
     void reset();
 
@@ -186,7 +189,6 @@ private:
     QFont mTitleFont;
     int mTitleFontPixelHeight;
     bool mShowValue;
-    int mMaxHistory;
     bool mUseThemeColors;
 
     // Colors
@@ -194,6 +196,7 @@ private:
     QColor mBackgroundColor;
     QColor mGridColor;
     QColor mTitleColor;
+    QColor mValueColor;
 
     // Data
     NvmlGpu mGpu;

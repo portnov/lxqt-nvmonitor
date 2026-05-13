@@ -49,6 +49,7 @@ private:
     QColor mGraphColor;
     QColor mGridColor;
     QColor mTitleColor;
+    QColor mValueColor;
 
 private:
     // Sets color preview button via stylesheet (setPalette is ignored in Qt6)
@@ -63,6 +64,7 @@ private slots:
     void graphColorChanged(const QColor &color);
     void gridColorChanged(const QColor &color);
     void titleColorChanged(const QColor &color);
+    void valueColorChanged(const QColor &color);
     void titleTextChanged(const QString &text);
     void gridLinesChanged(int value);
     void minimalSizeChanged(int value);

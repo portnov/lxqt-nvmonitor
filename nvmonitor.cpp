@@ -246,6 +246,7 @@ NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
     , mBackgroundColor(Qt::transparent)
     , mGridColor(QColor(192, 192, 192))
     , mTitleColor(Qt::white)
+    , mValueColor(Qt::white)
     , mGpu()
     , mGpuData()
     , mHistoryImage()
@@ -294,6 +295,7 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
         mGraphColor = QColor(settings->value(QStringLiteral("graph/color"), QStringLiteral("#ff0000")).toString());
         mGridColor = QColor(settings->value(QStringLiteral("grid/color"), QStringLiteral("#c0c0c0")).toString());
         mTitleColor = QColor(settings->value(QStringLiteral("title/color"), QStringLiteral("#ffffff")).toString());
+        mValueColor = QColor(settings->value(QStringLiteral("graph/valueColor"), QStringLiteral("#ffffff")).toString());
     }
 
     // Metric
@@ -559,7 +561,7 @@ void NvMonitorContent::drawValue(QPainter &p)
             break;
     }
 
-    p.setPen(mGraphColor);
+    p.setPen(mValueColor);
     p.setFont(mTitleFont);
 
     qreal graphTop = mTitleFontPixelHeight;

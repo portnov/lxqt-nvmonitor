@@ -82,6 +82,16 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
             }
         }
     });
+    connect(ui->valueColorPB, &QPushButton::clicked, this, [this]() {
+        QColor color = QColorDialog::getColor(mValueColor, this, tr("Select value color"));
+        if (color.isValid()) {
+            mValueColor = color;
+            setColorButton(ui->valueColorPB, color);
+            if (!mLockSettingChanges) {
+                this->settings().setValue(QStringLiteral("graph/valueColor"), color.name());
+            }
+        }
+    });
     connect(ui->titleLE, &QLineEdit::textChanged,
             this, &NvMonitorConfiguration::titleTextChanged);
     connect(ui->gridLinesSB, qOverload<int>(&QSpinBox::valueChanged),
@@ -141,9 +151,17 @@ void NvMonitorConfiguration::loadSettings()
     mTitleColor = QColor(titleColorName);
     setColorButton(ui->titleColorPB, mTitleColor);
 
+    QString valueColorName = settings().value(QStringLiteral("graph/valueColor"), QStringLiteral("#ffffff")).toString();
+    mValueColor = QColor(valueColorName);
+    setColorButton(ui->valueColorPB, mValueColor);
+
     ui->titleLE->setText(settings().value(QStringLiteral("title/label"), QString()).toString());
     ui->gridLinesSB->setValue(settings().value(QStringLiteral("grid/lines"), 1).toInt());
     ui->minimalSizeSB->setValue(settings().value(QStringLiteral("graph/minimalSize"), 30).toInt());
+
+    // Update initial enabled states of color buttons
+    useThemeColorsChanged(ui->useThemeColorsCB->isChecked());
+    showValueChanged(ui->showValueCB->isChecked());
 
     mLockSettingChanges = false;
 }
@@ -162,17 +180,37 @@ void NvMonitorConfiguration::updateIntervalChanged(double value)
     }
 }
 
-void NvMonitorConfiguration::showValueChanged(bool value)
+void NvMonitorConfiguration::showValueChanged(bool checked)
 {
     if (!mLockSettingChanges) {
-        settings().setValue(QStringLiteral("graph/showValue"), value);
+        settings().setValue(QStringLiteral("graph/showValue"), checked);
     }
+    // Enable/disable value color button based on show value checkbox
+    ui->valueColorPB->setEnabled(checked && !ui->useThemeColorsCB->isChecked());
+    ui->valueColorL->setEnabled(checked && !ui->useThemeColorsCB->isChecked());
 }
 
 void NvMonitorConfiguration::useThemeColorsChanged(bool checked)
 {
     if (!mLockSettingChanges) {
         settings().setValue(QStringLiteral("graph/useThemeColors"), checked);
+    }
+    // Enable/disable custom color buttons based on theme colors checkbox
+    bool enableCustomColors = !checked;
+    ui->graphColorPB->setEnabled(enableCustomColors);
+    ui->graphColorL->setEnabled(enableCustomColors);
+    ui->gridColorPB->setEnabled(enableCustomColors);
+    ui->gridColorL->setEnabled(enableCustomColors);
+    ui->titleColorPB->setEnabled(enableCustomColors);
+    ui->titleColorL->setEnabled(enableCustomColors);
+    ui->valueColorPB->setEnabled(enableCustomColors && ui->showValueCB->isChecked());
+    ui->valueColorL->setEnabled(enableCustomColors && ui->showValueCB->isChecked());
+}
+
+void NvMonitorConfiguration::valueColorChanged(const QColor &color)
+{
+    if (!mLockSettingChanges) {
+        settings().setValue(QStringLiteral("graph/valueColor"), color.name());
     }
 }
 
