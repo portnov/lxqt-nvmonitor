@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=LXQtPanel/Plugin
+Icon=utilities-system-monitor
+Comment=NVIDIA GPU Monitor - displays GPU utilization, VRAM usage, and temperature as a graph
+
+#TRANSLATIONS_DIR=../translations
