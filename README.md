@@ -1,5 +1,7 @@
 # NVIDIA GPU Monitor Plugin for LXQt Panel
 
+**Status: Highly Experimental!**
+
 An LXQt panel plugin that displays NVIDIA GPU metrics as a scrolling graph:
 - **GPU Utilization** — GPU processing unit usage percentage
 - **VRAM Load** — memory bandwidth utilization percentage
