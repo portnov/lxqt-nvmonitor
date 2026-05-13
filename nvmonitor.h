@@ -198,9 +198,8 @@ private:
     // Data
     NvmlGpu mGpu;
     NvmlGpuData mGpuData;
-    QVector<float> mHistory;
-    int mHistoryOffset;
     QImage mHistoryImage;
+    int mHistoryOffset;
 
     // Timer
     int mTimerId;

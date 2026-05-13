@@ -65,7 +65,6 @@ private slots:
     void titleColorChanged(const QColor &color);
     void titleTextChanged(const QString &text);
     void gridLinesChanged(int value);
-    void maxHistoryChanged(int value);
     void minimalSizeChanged(int value);
 };
 

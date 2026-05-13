@@ -86,8 +86,6 @@ NvMonitorConfiguration::NvMonitorConfiguration(PluginSettings *settings, QWidget
             this, &NvMonitorConfiguration::titleTextChanged);
     connect(ui->gridLinesSB, qOverload<int>(&QSpinBox::valueChanged),
             this, &NvMonitorConfiguration::gridLinesChanged);
-    connect(ui->maxHistorySB, qOverload<int>(&QSpinBox::valueChanged),
-            this, &NvMonitorConfiguration::maxHistoryChanged);
     connect(ui->minimalSizeSB, qOverload<int>(&QSpinBox::valueChanged),
             this, &NvMonitorConfiguration::minimalSizeChanged);
 }
@@ -145,7 +143,6 @@ void NvMonitorConfiguration::loadSettings()
 
     ui->titleLE->setText(settings().value(QStringLiteral("title/label"), QString()).toString());
     ui->gridLinesSB->setValue(settings().value(QStringLiteral("grid/lines"), 1).toInt());
-    ui->maxHistorySB->setValue(settings().value(QStringLiteral("graph/maxHistory"), 100).toInt());
     ui->minimalSizeSB->setValue(settings().value(QStringLiteral("graph/minimalSize"), 30).toInt());
 
     mLockSettingChanges = false;
@@ -190,13 +187,6 @@ void NvMonitorConfiguration::gridLinesChanged(int value)
 {
     if (!mLockSettingChanges) {
         settings().setValue(QStringLiteral("grid/lines"), value);
-    }
-}
-
-void NvMonitorConfiguration::maxHistoryChanged(int value)
-{
-    if (!mLockSettingChanges) {
-        settings().setValue(QStringLiteral("graph/maxHistory"), value);
     }
 }
 

@@ -195,8 +195,10 @@ NvmlGpuData NvmlGpu::getDeviceData(int index) const
     // Get device name
     char name[64];
     if (m_nvmlDeviceGetName) {
-        m_nvmlDeviceGetName(device, name, sizeof(name));
-        data.name = QString(name);
+        result = m_nvmlDeviceGetName(device, name, sizeof(name));
+        if (result == 0) {
+            data.name = QString(name);
+        }
     }
 
     // Get GPU and memory utilization
@@ -239,7 +241,6 @@ NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
     , mGridLines(1)
     , mTitleLabel()
     , mShowValue(false)
-    , mMaxHistory(100)
     , mUseThemeColors(true)
     , mGraphColor(Qt::red)
     , mBackgroundColor(Qt::transparent)
@@ -247,7 +248,7 @@ NvMonitorContent::NvMonitorContent(ILXQtPanelPlugin *plugin, QWidget *parent)
     , mTitleColor(Qt::white)
     , mGpu()
     , mGpuData()
-    , mHistory()
+    , mHistoryImage()
     , mHistoryOffset(0)
     , mTimerId(-1)
     , mTimerStarted(false)
@@ -285,7 +286,6 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     mGridLines = settings->value(QStringLiteral("grid/lines"), 1).toInt();
     mTitleLabel = settings->value(QStringLiteral("title/label"), QString()).toString();
     mShowValue = settings->value(QStringLiteral("graph/showValue"), false).toBool();
-    mMaxHistory = settings->value(QStringLiteral("graph/maxHistory"), 100).toInt();
 
     // Apply theme or custom colors
     if (mUseThemeColors) {
@@ -333,7 +333,7 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     }
 
     // Recreate history when size or metric changes
-    if (oldMetric != mMetric || mMaxHistory != static_cast<int>(mHistory.size())) {
+    if (oldMetric != mMetric) {
         reset();
     } else {
         update();
@@ -345,7 +345,6 @@ void NvMonitorContent::reset()
     setMinimumSize(mPlugin->panel()->isHorizontal() ? mMinimalSize : 2,
                    mPlugin->panel()->isHorizontal() ? 2 : mMinimalSize);
 
-    mHistory.clear();
     mHistoryOffset = 0;
     mHistoryImage = QImage();
 
@@ -418,23 +417,13 @@ void NvMonitorContent::updateGraph()
     // Clamp value to [0, 100]
     value = std::clamp(value, 0.0f, 100.0f);
 
-    // Append to history
-    mHistory.append(value);
-
-    // Limit history size
-    while (mHistory.size() > mMaxHistory) {
-        mHistory.removeFirst();
-    }
-
     // Update history image
     clearHistory();
 
     QPainter painter(&mHistoryImage);
-    int y = static_cast<int>(value);
-    if (y > 0) {
-        painter.setPen(mGraphColor);
-        painter.drawLine(mHistoryOffset, 100 - y, mHistoryOffset, 100);
-    }
+    float y_float = 100.0f - value;
+    painter.setPen(mGraphColor);
+    painter.drawLine(mHistoryOffset, static_cast<int>(y_float), mHistoryOffset, 100);
 
     // Guard against division by zero: mHistoryImage.width() may be 0
     // if resizeEvent was called with zero width
@@ -521,7 +510,7 @@ void NvMonitorContent::drawGrid(QPainter &p)
 
 void NvMonitorContent::drawGraph(QPainter &p)
 {
-    if (mHistory.isEmpty() || mHistoryImage.isNull()) {
+    if (mHistoryImage.isNull()) {
         return;
     }
 
