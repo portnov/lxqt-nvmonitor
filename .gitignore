@@ -1,4 +1,17 @@
 build/
 *.so
 *.desktop
+*.deb
+*.changes
+*.build
+*.buildinfo
+*.dsc
 .pi/
+
+# debian/ — только файлы сборки в gitignore, сами конфиги в git
+debian/.debhelper/
+debian/*.debhelper.log
+debian/*.substvars
+debian/*.stamp
+debian/files
+debian/lxqt-nvmonitor/

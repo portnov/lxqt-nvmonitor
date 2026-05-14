@@ -1,0 +1,30 @@
+#!/usr/bin/make -f
+# export DH_VERBOSE=1
+
+export LC_ALL=C.UTF-8
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# lxqt-panel source tree is required for headers not installed system-wide.
+# Set LXQT_PANEL_SRC via environment or make variable:
+#   debuild -us -uc -b LXQT_PANEL_SRC=/path/to/lxqt-panel
+LXQT_PANEL_SRC ?= ../lxqt-panel
+
+# Get the multiarch lib directory (e.g. lib/x86_64-linux-gnu)
+include /usr/share/dpkg/architecture.mk
+LIBDIR = lib/$(DEB_HOST_GNU_TYPE)
+
+%:
+	dh $@ --buildsystem cmake
+
+override_dh_auto_configure:
+	# Convert to absolute path so it works from the build directory
+	LXQT_PANEL_ABS=$(realpath $(LXQT_PANEL_SRC)) && \
+	echo "Using lxqt-panel source: $$LXQT_PANEL_ABS" && \
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DBUILD_TESTS=OFF \
+		-DCMAKE_INSTALL_LIBDIR=$(LIBDIR) \
+		-DLXQT_PANEL_SRC_DIR="$$LXQT_PANEL_ABS"
+
+# cmake handles installation via CMAKE_INSTALL, skip dh_install
+override_dh_install:

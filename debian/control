@@ -1,0 +1,27 @@
+Source: lxqt-nvmonitor
+Maintainer: Lubuntu Developers <lubuntu-devel@lists.ubuntu.com>
+Section: x11
+Priority: optional
+Build-Depends: debhelper-compat (= 13),
+ cmake (>= 3.16),
+ libkf6windowsystem-dev (>= 6.0.0),
+ liblxqt2-dev (>= 2.3.0),
+ qt6-base-private-dev (>= 6.6.0),
+ qt6-base-dev (>= 6.6.0)
+Standards-Version: 4.7.3
+Rules-Requires-Root: no
+Homepage: https://github.com/lxqt/lxqt-nvmonitor
+
+Package: lxqt-nvmonitor
+Architecture: any
+Depends: lxqt-panel (>= 2.3.0),
+ nvidia-compute-utils,
+ ${misc:Depends},
+ ${shlibs:Depends}
+Suggests: nvidia-driver
+Description: NVIDIA GPU monitor plugin for LXQt panel
+ An LXQt panel plugin that displays NVIDIA GPU metrics as a scrolling
+ graph. Supported metrics include GPU utilization, VRAM load, VRAM usage,
+ temperature, and power usage.
+ .
+ Data is sourced from the NVML library (libnvidia-ml.so).

@@ -1,0 +1,3 @@
+lxqt-nvmonitor-dbgsym_0.1-0ubuntu1_amd64.ddeb debug optional architecture=amd64 automatic=yes
+lxqt-nvmonitor_0.1-0ubuntu1_amd64.buildinfo x11 optional
+lxqt-nvmonitor_0.1-0ubuntu1_amd64.deb x11 optional architecture=amd64

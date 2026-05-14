@@ -1,0 +1,8 @@
+lxqt-nvmonitor (0.1-0ubuntu1) resolute; urgency=medium
+
+  * Initial Ubuntu release.
+    - NVIDIA GPU monitor plugin for LXQt panel.
+    - Displays GPU utilization, VRAM load, VRAM usage, temperature,
+      and power usage as a scrolling graph.
+
+ -- Portnov <portnov@example.com>  Sat, 17 May 2025 12:00:00 +0300
