@@ -320,6 +320,10 @@ void NvMonitorContent::updateSettings(const PluginSettings *settings)
     mTitleLabel = settings->value(QStringLiteral("title/label"), QString()).toString();
     mShowValue = settings->value(QStringLiteral("graph/showValue"), false).toBool();
 
+    // Apply minimum size based on panel orientation
+    setMinimumSize(mPlugin->panel()->isHorizontal() ? mMinimalSize : 2,
+                   mPlugin->panel()->isHorizontal() ? 2 : mMinimalSize);
+
     // Apply theme or custom colors
     if (mUseThemeColors) {
         applyThemeColors();

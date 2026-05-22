@@ -43,8 +43,6 @@ NvMonitor::NvMonitor(const ILXQtPanelPluginStartupInfo &startupInfo)
     layout->addWidget(mContent);
     layout->setStretchFactor(mContent, 1);
 
-    mContent->setMinimumSize(2, 2);
-
     settingsChanged();
 }
 
